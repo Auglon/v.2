@@ -1,0 +1,43 @@
+Here's a recommended tech stack for your Next.js 14 project with Vercel integration, AI capabilities, and other essential features:
+
+1. Core Framework:
+    - Next.js 15+ (with App Router)
+    - React 19+
+
+2. Deployment and Hosting:
+    - Vercel (for seamless deployment and serverless functions)
+
+3. AI Integration:
+    - Vercel AI SDK
+    - Google AI (Gemini) as the main provider
+
+4. Authentication:
+    - NextAuth.js (for easy integration with Next.js and various authentication providers)
+
+5. UI/UX and Animations:
+    - Tailwind CSS (for rapid UI development)
+    - Framer Motion (for smooth animations)
+    - Radix UI (for accessible UI components)
+
+6. Voice Conversations:
+    - ElevenLabs SDK (@11labs/react)
+
+7. State Management:
+    - Zustand (lightweight and simple state management)
+
+8. API Requests:
+    - React Query (for efficient data fetching and caching)
+
+9. Form Handling:
+    - React Hook Form (for efficient form management)
+
+10. Serverless Functions:
+    - Vercel Serverless Functions (built-in with Vercel deployment)
+
+11. Database (if needed):
+    - Vercel Postgres (for seamless integration with Vercel)
+
+12. Environment Variables:
+    - Vercel Environment Variables (for secure configuration management)
+
+13. TypeScript (for type safety and better developer experience)

@@ -1,0 +1,472 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+  font-family: Arial, Helvetica, sans-serif;
+  overflow: hidden;
+  height: 100vh;
+  margin: 0;
+  padding: 0;
+}
+
+@layer base {
+  :root {
+    --radius: 0.5rem;
+  }
+}
+
+/* app/globals.css (modified) */
+
+@keyframes flicker {
+  0% {
+    opacity: 0;
+  }
+  5% {
+    opacity: 0.02;
+  }
+  10% {
+    opacity: 0;
+  }
+  15% {
+    opacity: 0.01;
+  }
+  20% {
+    opacity: 0;
+  }
+  50% {
+    opacity: 0;
+  }
+  75% {
+    opacity: 0.01;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+@keyframes slowFlicker {
+  0% {
+    opacity: 0;
+  }
+  50% {
+    opacity: 0.01;
+  }
+  51% {
+    opacity: 0;
+  }
+  52% {
+    opacity: 0.02;
+  }
+  53% {
+    opacity: 0;
+  }
+  54% {
+    opacity: 0.01;
+  }
+  55% {
+    opacity: 0;
+  }
+  56% {
+    opacity: 0.015;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+@keyframes pulse {
+  0% {
+    opacity: 0.25;
+  }
+  50% {
+    opacity: 0.1;
+  }
+  100% {
+    opacity: 0.25;
+  }
+}
+
+@keyframes scanline {
+  0% {
+    transform: translateY(-100%);
+    opacity: 0;
+  }
+  50% {
+    opacity: 0.1;
+  }
+  100% {
+    transform: translateY(100%);
+    opacity: 0;
+  }
+}
+
+@keyframes scanlineMove {
+  from {
+    transform: translateY(0);
+  }
+  to {
+    transform: translateY(4px);
+  }
+}
+
+@keyframes textFlicker {
+  0% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.95;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+@keyframes blink {
+  0%,
+  100% {
+    opacity: 0;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+@keyframes glitchAnimation {
+  0% {
+    transform: translate(0);
+  }
+  25% {
+    transform: translate(2px, -2px);
+  }
+  50% {
+    transform: translate(-2px, 2px);
+  }
+  75% {
+    transform: translate(1px, -1px);
+  }
+  100% {
+    transform: translate(0);
+  }
+}
+
+/* Add some scan lines effect */
+.bg-\[\#201700\]::backdrop {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background: repeating-linear-gradient(
+    0deg,
+    rgba(255, 215, 0, 0.03),
+    rgba(255, 215, 0, 0.03) 1px,
+    transparent 1px,
+    transparent 2px
+  );
+  pointer-events: none;
+  animation: scanlineMove 10s linear infinite;
+}
+
+/* Add text glitch effect */
+.glitch {
+  animation: textFlicker 0.01s infinite;
+}
+
+/* Blinking cursor animation */
+.animate-blink {
+  animation: blink 0.7s infinite;
+}
+
+/* CRT Screen Styling */
+.crt {
+  position: relative;
+  overflow: hidden; /* Hide any overflow caused by the curvature */
+}
+
+.screen-curvature::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  background: radial-gradient(
+    ellipse at center,
+    rgba(0, 0, 0, 0) 0%,
+    rgba(0, 0, 0, 0.5) 100%
+  );
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* CRT Flicker Effects */
+.crt-flicker {
+  pointer-events: none;
+  position: fixed;
+  inset: 0;
+  background: #ffd700;
+  opacity: 0;
+  animation: flicker 0.15s infinite;
+  z-index: 50;
+}
+
+.crt-slow-flicker {
+  pointer-events: none;
+  position: fixed;
+  inset: 0;
+  background: #ffd700;
+  opacity: 0;
+  animation: slowFlicker 3s infinite;
+  z-index: 50;
+}
+
+.crt-scanline {
+  pointer-events: none;
+  position: fixed;
+  inset: 0;
+  background: linear-gradient(
+    to bottom,
+    transparent 50%,
+    rgba(255, 215, 0, 0.2) 51%
+  );
+  background-size: 100% 4px;
+  animation: scanline 10s linear infinite;
+  z-index: 40;
+}
+
+.scanline {
+  pointer-events: none;
+  position: fixed;
+  inset: 0;
+  background: repeating-linear-gradient(
+    0deg,
+    rgba(255, 215, 0, 0.03),
+    rgba(255, 215, 0, 0.03) 1px,
+    transparent 1px,
+    transparent 2px
+  );
+  animation: scanlineMove 10s linear infinite;
+}
+
+/* Input Form */
+.input-form {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 2rem;
+  background: linear-gradient(to top, #201700, transparent);
+}
+
+.input-pulse {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  border: 1px solid #ffd700;
+  opacity: 0.25;
+  animation: pulse 2s infinite;
+}
+
+.input-field {
+  width: 100%;
+  background: transparent;
+  border: 1px solid #ffd700;
+  padding: 1rem;
+  font-family: 'Courier New', Courier, monospace;
+  color: #ffd700;
+  &:focus {
+    outline: none;
+    border-opacity: 1;
+  }
+  &::placeholder {
+    color: #ffd700;
+    opacity: 0.5;
+  }
+  &:disabled {
+    opacity: 0.5;
+  }
+}
+
+.submit-button {
+  border: 1px solid #ffd700;
+  padding: 0.5rem;
+  transition: background-color 0.2s, color 0.2s;
+
+  &:hover {
+    background-color: #ffd700;
+    color: #201700;
+  }
+  &:disabled {
+    opacity: 0.5;
+  }
+}
+
+/* Text Shadow for Phosphor Glow */
+.text-shadow-phosphor {
+  text-shadow: 0 0 5px rgba(255, 215, 0, 0.7), 0 0 10px rgba(255, 215, 0, 0.4);
+  filter: blur(1px); /* Subtle blur for glow */
+  opacity: 0.8;
+}
+
+/* Glitch Effect */
+.glitch-effect {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: #ffd700; /* Or any color you want for the glitch */
+  mix-blend-mode: difference; /* Creates interesting color effects */
+  opacity: 0.1; /* Adjust opacity as needed */
+  animation: glitchAnimation 0.1s infinite;
+  pointer-events: none; /* Ensure it doesn't interfere with interactions */
+  z-index: 10; /* Ensure it's above the text */
+}
+
+/* Phosphor Glow Effect */
+.phosphor-glow {
+  text-shadow: 0 0 5px rgba(0, 255, 0, 0.5), 0 0 10px rgba(0, 255, 0, 0.3);
+}
+
+/* Blinking Cursor Animation */
+@keyframes blink {
+  50% {
+    opacity: 0;
+  }
+}
+
+.animate-blink {
+  animation: blink 1s step-end infinite;
+}
+
+/* Glitch Effect (Example - Customize this!) */
+.glitch {
+  position: relative;
+}
+
+.glitch::before,
+.glitch::after {
+  content: attr(data-text);
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  clip: rect(0, 0, 0, 0);
+}
+
+.glitch::before {
+  left: -2px;
+  text-shadow: 1px 0 #ff0000;
+  animation: glitch-anim-1 2s infinite linear alternate-reverse;
+}
+
+.glitch::after {
+  left: 2px;
+  text-shadow: -1px 0 #00ffff;
+  animation: glitch-anim-2 2s infinite linear alternate-reverse;
+}
+
+@keyframes glitch-anim-1 {
+  0% {
+    clip: rect(24px, 9999px, 14px, 0);
+  }
+  /* Add more keyframes here for a more complex glitch */
+  100% {
+    clip: rect(85px, 9999px, 65px, 0);
+  }
+}
+
+@keyframes glitch-anim-2 {
+  0% {
+    clip: rect(44px, 9999px, 48px, 0);
+  }
+  /* Add more keyframes here for a more complex glitch */
+  100% {
+    clip: rect(4px, 9999px, 88px, 0);
+  }
+}
+
+/* Example Input Form Styling */
+.input-form {
+  padding: 1rem;
+  border-top: 1px solid #ccc;
+}
+
+.input-border {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  border: 2px solid #ccc;
+  border-radius: 5px;
+  pointer-events: none;
+}
+
+.input-field {
+  width: 100%;
+  padding: 0.5rem;
+  border: none;
+  background-color: transparent;
+  outline: none;
+  font-size: 1rem;
+}
+
+.submit-button {
+  background-color: #007bff;
+  color: white;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+/* Remove any animation-related styles */
+.terminal {
+  background-color: #0a0a0a;
+  color: #33ff33;
+  font-family: monospace;
+  padding: 1rem;
+  height: 100vh;
+  width: 100%;
+}
+
+.terminal-header {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.875rem;
+  margin-bottom: 1rem;
+  color: #666;
+}
+
+.terminal-content {
+  height: calc(100% - 4rem);
+  overflow-y: auto;
+}
+
+.terminal-input {
+  background-color: transparent;
+  border: none;
+  color: #33ff33;
+  font-family: monospace;
+  width: 100%;
+  padding: 0.5rem 0;
+  outline: none;
+}
+
+.terminal-input::before {
+  content: '>';
+  margin-right: 0.5rem;
+}
+
+@layer utilities {
+  .scrollbar-hide {
+    -ms-overflow-style: none;  /* IE and Edge */
+    scrollbar-width: none;  /* Firefox */
+  }
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;  /* Chrome, Safari and Opera */
+  }
+}
+

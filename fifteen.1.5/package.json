@@ -1,0 +1,38 @@
+{
+  "name": "nextjs-ai-project",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint"
+  },
+  "dependencies": {
+    "@11labs/react": "^0.0.4",
+    "@ai-sdk/google": "^1.1.0",
+    "ai": "^4.1.0",
+    "@google/generative-ai": "^0.2.1",
+    "@radix-ui/react-primitive": "^2.0.1",
+    "@vercel/postgres": "^0.10.0",
+  
+    "framer-motion": "^12.0.0",
+    "lucide-react": "^0.473.0",
+    "next": "15.1.5",
+    "next-auth": "^4.24.11",
+    "react": "19.0.0",
+    "react-dom": "19.0.0",
+    "react-hook-form": "^7.54.2",
+    "tailwindcss-animate": "^1.0.7",
+    "zod": "^3.24.1"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.7",
+    "@types/react": "^19.0.7",
+    "@types/react-dom": "^19.0.3",
+    "autoprefixer": "^10.4.20",
+    "postcss": "^8.5.1",
+    "tailwindcss": "^3.4.17",
+    "typescript": "^5.7.3"
+  }
+}
