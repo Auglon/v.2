@@ -15,6 +15,14 @@
   }
 }
 
+@layer components {
+  .above-overlay {
+    pointer-events: auto;
+    position: relative;
+    z-index: 40;
+  }
+}
+
 body {
   @apply bg-background text-foreground;
   font-family: Arial, Helvetica, sans-serif;
@@ -62,6 +70,12 @@ body {
   );
 }
 
+.above-overlay {
+  pointer-events: auto;
+  position: relative;
+  z-index: 40;
+}
+
 .screen-curve {
   background: radial-gradient(
     circle at center,
@@ -93,6 +107,7 @@ body {
   50% { opacity: 0.8; }
   100% { opacity: 1; }
 }
+
 @keyframes flicker {
   0% { opacity: 0.98; }
   5% { opacity: 0.95; }
@@ -288,5 +303,50 @@ body {
   .scrollbar-none::-webkit-scrollbar {
     display: none;             /* Chrome, Safari and Opera */
   }
+}
+
+/* Ensure all overlay effects don't interfere with interactions */
+.crt::before,
+.crt::after,
+.screen-curvature,
+.bg-scanline,
+.bg-vignette,
+.screen-curve,
+.screen-glow,
+.crt-flicker,
+.crt-slow-flicker,
+.crt-scanline,
+.scanline,
+#noise,
+[class*="pointer-events-none"] {
+  pointer-events: none !important;
+  z-index: 1;
+}
+
+/* Interactive elements should be above overlays */
+.interactive-container {
+  position: relative;
+  z-index: 20;
+}
+
+/* Status panel and controls */
+.status-panel {
+  position: relative;
+  z-index: 30;
+}
+
+/* Form controls need highest z-index */
+.control-layer {
+  position: relative;
+  z-index: 40;
+}
+
+/* Ensure proper stacking for fixed elements */
+.fixed {
+  z-index: 2;
+}
+
+.fixed.interactive {
+  z-index: 30;
 }
 

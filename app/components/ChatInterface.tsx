@@ -555,7 +555,7 @@ export default function ChatInterface() {
   //===================================================================================================
 
   return (
-    <div className="crt h-screen bg-[#201700] text-[#FFD700] font-mono relative overflow-hidden">
+    <div className="crt h-screen bg-[#201700] text-[#FFD700] font-mono relative">
       {/* CRT Effects Layer
           Provides visual effects like scan lines, flicker, and screen curvature */}
       <div className="absolute inset-0 pointer-events-none screen-curvature" />
@@ -593,7 +593,7 @@ export default function ChatInterface() {
           </div>
         </div>
       </div>
-      <div className="fixed top-6 right-6 text-xs text-right space-y-1">
+      <div className="fixed top-6 right-6 text-xs text-right space-y-1 interactive fixed interactive">
         <div className="flex items-center justify-end">
           <span>TERMINAL STATUS: </span>
           <span className={`ml-2 ${isBooted ? 'text-[#90EE90]' : 'text-[#FF4500] animate-pulse'}`}>
@@ -605,29 +605,28 @@ export default function ChatInterface() {
         <div className="text-[#90EE90]">SECURITY: GAMMA CLEARANCE</div>
         <button 
           onClick={audioEnabled ? disableAudio : enableAudio}
-          className="mt-4 px-2 py-1 border border-[#FFD700] hover:bg-[#FFD700] hover:text-[#201700] relative w-200px"
+          className="mt-4 px-2 py-1 border text-[#dfc00dc2] border-[#ffd900f6] hover:bg-[#e9c60098] hover:text-[#201700] cursor-pointer control-layer"
         >
           {audioEnabled ? 'DISABLE AUDIO SYSTEMS' : 'ENABLE AUDIO SYSTEMS'}
         </button>
-
-     
-          {/* Warning Messages Section */}
-          <div className="mt-15 text-left border w-[400px] border-[#FFD700]/10 p-4 bg-[#201700]/50">
-            <div className="text-[10px] uppercase tracking-wider mb-2 text-[#FFD700] opacity-70">Active Warnings</div>
-            <div className="space-y-2">
-              {displayedMessages.filter(msg => 
-                msg.content?.includes('[WARNING]') || 
-                msg.content?.includes('[ALERT]') ||
-                msg.content?.includes('[CRITICAL]')
-              ).slice(-3).map((msg, i) => (
-                <div key={i} className="text-[11px] flex items-start gap-2">
-                  <span className="text-[#FF4500] mt-0.5">▲</span>
-                  <span className="opacity-90">{msg.content?.replace(/\[(WARNING|ALERT|CRITICAL)\]\s?/g, '')}</span>
-                </div>
-              ))}
-            </div>
+        
+        {/* Warning Messages Section */}
+        <div className="mt-3rem text-left border w-[400px] border-[#FFD700]/10 p-4 bg-[#201700]/50">
+          <div className="text-[10px] mt-3rem uppercase tracking-wider mb-2 text-[#FFD700] opacity-70">Active Warnings</div>
+          <div className="space-y-2">
+            {displayedMessages.filter(msg => 
+              msg.content?.includes('[WARNING]') || 
+              msg.content?.includes('[ALERT]') ||
+              msg.content?.includes('[CRITICAL]')
+            ).slice(-3).map((msg, i) => (
+              <div key={i} className="text-[11px] flex items-start gap-2">
+                <span className="text-[#FF4500] mt-0.5">▲</span>
+                <span className="opacity-90">{msg.content?.replace(/\[(WARNING|ALERT|CRITICAL)\]\s?/g, '')}</span>
+              </div>
+            ))}
           </div>
         </div>
+      </div>
 
       {/* Scanline and noise effects */}
       <div className="fixed inset-0 pointer-events-none">
@@ -647,7 +646,7 @@ export default function ChatInterface() {
       </div>
 
       {/* Main Content Area with Chat */}
-      <div className="flex h-[calc(100vh-8rem)] mx-4 mt-20 mb-24">
+      <div className="flex h-[calc(100vh-8rem)] mx-4 mt-20 mb-24 interactive-container">
         {/* Chat Messages Area */}
         <div className="flex-1 overflow-y-auto relative
         before:content-[''] 
@@ -722,7 +721,7 @@ export default function ChatInterface() {
           Message input with submit button */}
       <form
         onSubmit={onSubmit}
-        className="fixed bottom-4 inset-x-4 p-8 bg-gradient-to-t from-[#201700] to-transparent"
+        className="fixed bottom-4 inset-x-4 p-8 bg-gradient-to-t from-[#201700] to-transparent interactive fixed interactive"
       >
         <div className="max-w-4xl mx-auto flex gap-4">
           <div className="flex-1 relative">
