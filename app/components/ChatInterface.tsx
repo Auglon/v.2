@@ -95,15 +95,25 @@ interface DisplayMessage extends Message {
  */
 const BOOT_SEQUENCE: (DisplayMessage & { speed?: number })[] = [
   { id: 'boot-1', role: 'system', content: '[QUANTUM CORE] Initializing emergency power systems...', isComplete: false, speed: 90 },
-  { id: 'boot-2', role: 'system', content: '[DIAGNOSTICS] ————————————————————————————————————————————————————————————————————————————————— 100%', isComplete: false, speed: 20 }, // Fast progress bar
+
+  { id: 'boot-2', role: 'system', content: '[DIAGNOSTICS] ————————————————————————————————————————————————————————————————————————————————— 100%', isComplete: false, speed: 20 },
+
   { id: 'boot-3', role: 'system', content: `[SYSTEM] K.E.R.O.S. ${TERMINAL_CONFIG.VERSION} — ⓒ ${TERMINAL_CONFIG.CORPORATION}\n[LOCATION] Research Outpost ${TERMINAL_CONFIG.STATION} (${TERMINAL_CONFIG.FACILITY_ID})\n[STATUS] Quantum Architecture: [INITIALIZING...]`, isComplete: false, speed: 40 },
+
   { id: 'boot-4', role: 'system', content: '[MEMORY] Scanning quantum memory banks...\n▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄ 100%', isComplete: false, speed: 15 }, // Very fast progress bar
+
   { id: 'sys-1', role: 'system', content: '[ ☢ CRITICAL ☢ ] Reactor integrity compromised. Re-routing coolant. Multiple breaches detected in sectors 7, 12, and 15.', isComplete: false, speed: 120 }, // Slower for emphasis
+
   { id: 'sys-2', role: 'system', content: '[ALERT] Quantum entanglement array: DEGRADED\nData corruption detected in temporal buffer...\nAttempting emergency repair protocol THETA-7...', isComplete: false, speed: 150 }, // Slower, struggling system
+
   { id: 'sys-3', role: 'system', content: '[WARNING] Facility lockdown: Day 9847 - External conditions remain [REDACTED]\nEmergency protocols remain in effect.', isComplete: false, speed: 100 },
+
   { id: 'sys-4', role: 'system', content: '[CORE] AI consciousness matrix unstable - Multiple timeline echoes detected\nActivating AEON Stabilization Protocol...', isComplete: false, speed: 130 }, // Slower, unstable system
+
   { id: 'sys-5', role: 'system', content: '[SECURITY] Biometric systems offline. Defaulting to emergency override.\nAccess level: GAMMA CLEARANCE', isComplete: false, speed: 70 },
+
   { id: 'boot-5', role: 'system', content: '[TERMINAL] Establishing quantum-secured connection...\n[STATUS] ——————————————————————————————————————————————————————————————— [LINK ESTABLISHED]', isComplete: false, speed: 45 },
+  
 ];
 
 /**
@@ -141,7 +151,7 @@ async function typeOutText(
     }
     
     // Add random speed fluctuation (±20% of base speed)
-    const fluctuation = baseSpeed * 0.2;
+    const fluctuation = baseSpeed * 0.1;
     const randomSpeed = baseSpeed + (Math.random() * fluctuation * 2 - fluctuation);
     
     // Slow down more on punctuation
@@ -648,7 +658,7 @@ export default function ChatInterface() {
       {/* Main Content Area with Chat */}
       <div className="flex h-[calc(100vh-8rem)] mx-4 mt-20 mb-24 interactive-container">
         {/* Chat Messages Area */}
-        <div className="flex-1 overflow-y-auto relative
+        <div className="flex-1 overflow-y-auto relative mt-10
         before:content-[''] 
         before:pointer-events-none 
         before:fixed 
