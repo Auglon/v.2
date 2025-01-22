@@ -278,21 +278,20 @@ export function MapGrid({
             height="50"
             patternUnits="userSpaceOnUse"
           >
-            <rect width="50" height="50" fill="#000000" />
+            <rect width="50" height="50" fill="#021426" />
             <path
               d="M 50 0 L 0 0 0 50"
               fill="none"
-              stroke="#ffa500"
+              stroke="#00bfff"
               strokeWidth="0.5"
-              opacity="0.3"
             />
-            <circle cx="50" cy="50" r="1" fill="#ffa500" opacity="0.3" />
+            <circle cx="50" cy="50" r="1" fill="#00bfff" />
           </pattern>
 
           {/* Sector glow */}
           <radialGradient id="sectorGlow" cx="50%" cy="50%" r="50%">
-            <stop offset="0%" stopColor="rgba(255,165,0,0.4)" />
-            <stop offset="100%" stopColor="rgba(255,165,0,0)" />
+            <stop offset="0%" stopColor="rgba(0,191,255,0.4)" />
+            <stop offset="100%" stopColor="rgba(0,191,255,0)" />
           </radialGradient>
 
           {/* Pattern for service tunnels */}
@@ -308,7 +307,7 @@ export function MapGrid({
               y1="0"
               x2="0"
               y2="20"
-              stroke="rgba(255,165,0,0.4)"
+              stroke="rgba(0,191,255,0.4)"
               strokeWidth="3"
             />
           </pattern>
@@ -321,8 +320,8 @@ export function MapGrid({
             patternTransform="rotate(45 0 0)"
             patternUnits="userSpaceOnUse"
           >
-            <rect width="4" height="4" fill="#000000" />
-            <line x1="0" y1="0" x2="0" y2="4" stroke="#ffa500" opacity="0.3" />
+            <rect width="4" height="4" fill="#021426" />
+            <line x1="0" y1="0" x2="0" y2="4" stroke="#00bfff" />
           </pattern>
         </defs>
 
@@ -337,11 +336,8 @@ export function MapGrid({
             width={viewBoxSize - 100}
             height={viewBoxSize - 100}
             fill="url(#wallHatch)"
-            stroke="#ffa500"
+            stroke="#00bfff"
             strokeWidth="5"
-            style={{
-              filter: "drop-shadow(0 0 2px rgba(255,165,0,0.5))"
-            }}
           />
         </g>
 
@@ -356,15 +352,12 @@ export function MapGrid({
               <path
                 key={`corridor-${idx}`}
                 d={path}
-                stroke={isService ? "url(#servicePattern)" : "#ffa500"}
+                stroke={isService ? "url(#servicePattern)" : "#00bfff"}
                 strokeWidth={strokeWidth}
                 fill="none"
                 opacity={opacity}
                 strokeLinecap="round"
                 strokeLinejoin="round"
-                style={{
-                  filter: "drop-shadow(0 0 1px rgba(255,165,0,0.3))"
-                }}
               />
             );
           })}
@@ -391,36 +384,27 @@ export function MapGrid({
                 d={pathData}
                 fill="url(#sectorGlow)"
                 opacity={glowOpacity}
-                style={{
-                  filter: "drop-shadow(0 0 3px rgba(255,165,0,0.6))"
-                }}
               />
               {/* Main sector body */}
               <path
                 d={pathData}
-                fill={`rgba(255,165,0,${fillOpacity})`}
-                stroke="#ffa500"
+                fill={`rgba(0,191,255,${fillOpacity})`}
+                stroke="#00bfff"
                 strokeWidth="2"
                 onClick={() => handleSectorClick(sector)}
-                className="cursor-pointer transition-colors duration-200 hover:fill-[rgba(255,165,0,0.3)]"
-                style={{
-                  filter: "drop-shadow(0 0 2px rgba(255,165,0,0.4))"
-                }}
+                className="cursor-pointer transition-colors duration-200 hover:fill-[rgba(0,191,255,0.3)]"
               />
               {/* Label */}
               <text
                 x={labelPosition.x}
                 y={labelPosition.y}
-                fill="#ffa500"
+                fill="#00bfff"
                 fontSize="38"
                 fontWeight="600"
                 textAnchor="middle"
                 alignmentBaseline="middle"
-                fontFamily="'VT323', monospace"
+                fontFamily="monospace"
                 className="pointer-events-none"
-                style={{
-                  filter: "drop-shadow(0 0 1px rgba(255,165,0,0.8))"
-                }}
               >
                 {sector.id}
               </text>
@@ -441,9 +425,6 @@ export function MapGrid({
               stroke="rgba(255,0,0,0.2)"
               strokeWidth="1"
               className="animate-ping"
-              style={{
-                filter: "drop-shadow(0 0 2px rgba(255,0,0,0.4))"
-              }}
             />
             <circle
               r="15"
@@ -451,19 +432,9 @@ export function MapGrid({
               stroke="rgba(255,0,0,0.4)"
               strokeWidth="2"
               className="animate-ping"
-              style={{ 
-                animationDelay: "-0.5s",
-                filter: "drop-shadow(0 0 2px rgba(255,0,0,0.6))"
-              }}
+              style={{ animationDelay: "-0.5s" }}
             />
-            <circle 
-              r="5" 
-              fill="#FF0000" 
-              className="animate-pulse"
-              style={{
-                filter: "drop-shadow(0 0 3px rgba(255,0,0,0.8))"
-              }}
-            />
+            <circle r="5" fill="#FF0000" className="animate-pulse" />
           </g>
         )}
 
@@ -485,9 +456,6 @@ export function MapGrid({
                   ? "animate-pulse"
                   : ""
               }
-              style={{
-                mixBlendMode: "overlay"
-              }}
             />
             {/* More prominent emergency indicators */}
             {emergencyLevel === "RED" && (
@@ -501,9 +469,6 @@ export function MapGrid({
                     strokeWidth="2"
                     className="animate-pulse"
                     transform={`translate(1000,1000) rotate(${angle}) scale(1.5)`}
-                    style={{
-                      filter: "drop-shadow(0 0 4px rgba(255,0,0,0.8))"
-                    }}
                   />
                 ))}
               </g>
@@ -511,14 +476,6 @@ export function MapGrid({
           </>
         )}
       </svg>
-      <div 
-        className="absolute inset-0 pointer-events-none" 
-        style={{
-          background: "repeating-linear-gradient(0deg, rgba(0,0,0,0.1) 0px, rgba(0,0,0,0.1) 1px, transparent 1px, transparent 2px)",
-          mixBlendMode: "multiply",
-          opacity: 0.3
-        }}
-      />
     </div>
   );
 }
