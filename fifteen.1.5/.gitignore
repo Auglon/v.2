@@ -19,8 +19,9 @@
 
 # production
 /build
-./components/map.tsx
-./components/mapGrid.tsx
+/components/map.tsx
+/components/mapGrid.tsx
+
 # misc
 .DS_Store
 *.pem
@@ -40,5 +41,3 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
-
-.vercel
