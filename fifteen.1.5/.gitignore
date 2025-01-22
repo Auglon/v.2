@@ -19,7 +19,8 @@
 
 # production
 /build
-
+/map.tsx
+/mapGrid.tsx
 # misc
 .DS_Store
 *.pem
