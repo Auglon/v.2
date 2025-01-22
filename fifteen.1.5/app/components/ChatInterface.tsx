@@ -555,15 +555,15 @@ export default function ChatInterface() {
   //===================================================================================================
 
   return (
-    <div className="h-screen bg-[#201700] text-[#FFD700] font-mono relative overflow-hidden">
-      {/* CRT Effects Layer - Modified to be subtle overlay */}
-      <div className="absolute inset-0 pointer-events-none opacity-30 mix-blend-overlay">
-        <div className="screen-curvature" />
-        <div className="crt-flicker" />
-        <div className="crt-slow-flicker" />
-        <div className="crt-scanline" />
-        <div className="scanline" />
-      </div>
+    <div className="crt h-screen bg-[#201700] text-[#FFD700] font-mono relative overflow-hidden">
+      {/* CRT Effects Layer
+          Provides visual effects like scan lines, flicker, and screen curvature */}
+      <div className="absolute inset-0 pointer-events-none screen-curvature" />
+      <div id="noise" className="fixed inset-0 pointer-events-none opacity-[0.1] mix-blend-overlay" />
+      <div className="crt-flicker -z-10" />
+      <div className="crt-slow-flicker -z-10" />
+      <div className="crt-scanline -z-10" />
+      <div className="scanline -z-10" />
 
       {/* Terminal Frame
           Creates the outer border with corner decorations */}
@@ -628,6 +628,23 @@ export default function ChatInterface() {
             </div>
           </div>
         </div>
+
+      {/* Scanline and noise effects */}
+      <div className="fixed inset-0 pointer-events-none">
+        <div className="absolute inset-0 bg-scanline opacity-[0.15]" />
+        <div className="absolute inset-0 bg-noise animate-noise opacity-[0.08]" />
+      </div>
+
+      {/* Screen edge vignette effect */}
+      <div className="fixed inset-0 pointer-events-none">
+        <div className="absolute inset-0 bg-vignette opacity-50" />
+      </div>
+
+      {/* CRT screen curvature and glow */}
+      <div className="fixed inset-0 pointer-events-none">
+        <div className="absolute inset-0 screen-curve opacity-40" />
+        <div className="absolute inset-0 screen-glow" />
+      </div>
 
       {/* Main Content Area with Chat */}
       <div className="flex h-[calc(100vh-8rem)] mx-4 mt-20 mb-24">
