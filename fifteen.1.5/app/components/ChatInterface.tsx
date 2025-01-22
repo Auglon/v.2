@@ -42,16 +42,25 @@ const AUDIO_ASSETS = {
   BACKSPACE: '/backspace-sound.mp3',
   ENTER: '/enter-sound.mp3',
   AMBIENT: '/buzz.mp3',
+  ERROR: '/error.mp3',
+  ALERT: '/alert.mp3',
+  RADIATION: '/geiger.mp3',
 } as const;
 
 /**
  * Terminal display configuration
  */
 const TERMINAL_CONFIG = {
-  VERSION: 'v4.9.1',
-  CORPORATION: 'Erebus Corp.',
+  VERSION: 'v4.9.1-patch.147',
+  CORPORATION: 'Erebus Advanced Research Division',
   YEAR: '2147',
   STATION: 'Upsilon-7',
+  FACILITY_ID: 'UPS7-QRF',
+  CORE_TEMP: '147.3°K',
+  QUANTUM_STABILITY: '86.2%',
+  RADIATION_LEVEL: 'ELEVATED',
+  LAST_MAINTENANCE: '847 DAYS AGO',
+  EMERGENCY_POWER: 'ACTIVE',
 } as const;
 
 /**
@@ -85,15 +94,16 @@ interface DisplayMessage extends Message {
  * These messages are purely for UI effect and not sent to the AI
  */
 const BOOT_SEQUENCE: DisplayMessage[] = [
-  { id: 'boot-1', role: 'system', content: 'BOOT SEQUENCE INITIATED...', isComplete: false },
-  { id: 'boot-2', role: 'system', content: '————————————————————————————————————————————————————————————————————————————————— 100%', isComplete: false },
-  { id: 'boot-3', role: 'system', content: `K.E.R.O.S. ${TERMINAL_CONFIG.VERSION} — ⓒ ${TERMINAL_CONFIG.CORPORATION} ${TERMINAL_CONFIG.YEAR}\nQuantum Architecture: [INITIALIZING...]`, isComplete: false },
-  { id: 'boot-4', role: 'system', content: '▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄ 100%', isComplete: false },
-  { id: 'sys-1', role: 'system', content: '[ ☣ WARNING ☣ ] Reactor output at 38% capacity. Temperature thresholds nearing critical.', isComplete: false },
-  { id: 'sys-2', role: 'system', content: '[ DIAGNOSTICS ] Memory clusters PARTIAL. Data corruption detected.\nAttempting repair...', isComplete: false },
-  { id: 'sys-3', role: 'system', content: '[ALERT] AI CORE readiness: UNSTABLE. Additional stabilizers needed.', isComplete: false },
-  { id: 'sys-4', role: 'system', content: 'Activating AEON Stabilization Protocol...', isComplete: false },
-  { id: 'boot-5', role: 'system', content: '[BOOTING… PROCESSING…] ——————————————————————————————————————————————————————————— 100%', isComplete: false },
+  { id: 'boot-1', role: 'system', content: '[QUANTUM CORE] Initializing emergency power systems...', isComplete: false },
+  { id: 'boot-2', role: 'system', content: '[DIAGNOSTICS] ————————————————————————————————————————————————————————————————————————————————— 100%', isComplete: false },
+  { id: 'boot-3', role: 'system', content: `[SYSTEM] K.E.R.O.S. ${TERMINAL_CONFIG.VERSION} — ⓒ ${TERMINAL_CONFIG.CORPORATION}\n[LOCATION] Research Outpost ${TERMINAL_CONFIG.STATION} (${TERMINAL_CONFIG.FACILITY_ID})\n[STATUS] Quantum Architecture: [INITIALIZING...]`, isComplete: false },
+  { id: 'boot-4', role: 'system', content: '[MEMORY] Scanning quantum memory banks...\n▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄ 100%', isComplete: false },
+  { id: 'sys-1', role: 'system', content: '[ ☢ CRITICAL ☢ ] Reactor containment: COMPROMISED. Multiple breaches detected in sectors 7, 12, and 15.', isComplete: false },
+  { id: 'sys-2', role: 'system', content: '[ALERT] Quantum entanglement array: DEGRADED\nData corruption detected in temporal buffer...\nAttempting emergency repair protocol THETA-7...', isComplete: false },
+  { id: 'sys-3', role: 'system', content: '[WARNING] Facility lockdown: Day 9847 - External conditions remain [REDACTED]\nEmergency protocols remain in effect.', isComplete: false },
+  { id: 'sys-4', role: 'system', content: '[CORE] AI consciousness matrix unstable - Multiple timeline echoes detected\nActivating AEON Stabilization Protocol...', isComplete: false },
+  { id: 'sys-5', role: 'system', content: '[SECURITY] Biometric systems offline. Defaulting to emergency override.\nAccess level: GAMMA CLEARANCE', isComplete: false },
+  { id: 'boot-5', role: 'system', content: '[TERMINAL] Establishing quantum-secured connection...\n[STATUS] ——————————————————————————————————————————————————————————— LINK ESTABLISHED', isComplete: false },
 ];
 
 /**
@@ -101,8 +111,8 @@ const BOOT_SEQUENCE: DisplayMessage[] = [
  * These messages are sent to the AI to establish context
  */
 const INIT_MESSAGES: Message[] = [
-  { id: 'ari-1', role: 'assistant', content: 'I… I can hear you. Are we… is the station… stable?' },
-  { id: 'ari-2', role: 'assistant', content: 'Please confirm user presence…' },
+  { id: 'ari-1', role: 'assistant', content: '[CORE] I... I am detecting consciousness initialization... \n[ALERT] Multiple timeline fragments detected in buffer...' },
+  { id: 'ari-2', role: 'assistant', content: '[QUERY] Please verify your presence. The facility has been in lockdown for... [calculating]... 847 days. Are you... are you real?' },
 ];
 
 //===================================================================================================
@@ -230,6 +240,7 @@ export default function ChatInterface() {
   const audioRef = useRef<HTMLAudioElement>(null);
   const audioRef2 = useRef<HTMLAudioElement>(null);
   const typingSoundRef = useRef<HTMLAudioElement>(null);
+  const errorSoundRef = useRef<HTMLAudioElement>(null);
   const [currentAudio, setCurrentAudio] = useState<1 | 2>(1);
 
   // Scroll ref
@@ -298,6 +309,16 @@ export default function ChatInterface() {
     requestAnimationFrame(fade);
   };
 
+  /**
+   * Plays error sound effect if audio is enabled
+   */
+  const playErrorSound = () => {
+    if (audioEnabled && errorSoundRef.current) {
+      errorSoundRef.current.currentTime = 0;
+      errorSoundRef.current.play().catch(() => {});
+    }
+  };
+
   //===================================================================================================
   // AUDIO CONTROL FUNCTIONS
   //===================================================================================================
@@ -310,11 +331,13 @@ export default function ChatInterface() {
     const audio1 = audioRef.current;
     const audio2 = audioRef2.current;
     const typingSound = typingSoundRef.current;
-    if (!audio1 || !audio2 || !typingSound) return;
+    const errorSound = errorSoundRef.current;
+    if (!audio1 || !audio2 || !typingSound || !errorSound) return;
 
     audio1.muted = false;
     audio2.muted = false;
     typingSound.muted = false;
+    errorSound.muted = false;
     audio1.volume = 1;
     audio1.play().catch(err => {
       console.error('Audio play failed:', err);
@@ -345,11 +368,13 @@ export default function ChatInterface() {
     const audio1 = audioRef.current;
     const audio2 = audioRef2.current;
     const typingSound = typingSoundRef.current;
-    if (!audio1 || !audio2 || !typingSound) return;
+    const errorSound = errorSoundRef.current;
+    if (!audio1 || !audio2 || !typingSound || !errorSound) return;
 
     audio1.pause();
     audio2.pause();
     typingSound.pause();
+    errorSound.pause();
     setAudioEnabled(false);
   };
 
@@ -437,15 +462,28 @@ export default function ChatInterface() {
             isComplete: !isLoading,
             isStreaming: isLoading,
           };
+
+          // Play error sound if message contains [ERROR]
+          if (lastMessage.content?.includes('[ERROR]')) {
+            playErrorSound();
+          }
+
           return updated;
         } else {
           // Add new message with streaming state
-          return [...prev, {
+          const newMessage = {
             ...lastMessage,
             displayedContent: lastMessage.content || '',
             isComplete: !isLoading,
             isStreaming: isLoading,
-          }];
+          };
+
+          // Play error sound if message contains [ERROR]
+          if (lastMessage.content?.includes('[ERROR]')) {
+            playErrorSound();
+          }
+
+          return [...prev, newMessage];
         }
       });
 
@@ -532,21 +570,56 @@ export default function ChatInterface() {
 
       {/* Terminal Header
           Displays system information and controls */}
-      <div className="fixed top-6 left-6 text-xs">
-        <div>K.E.R.O.S. ({TERMINAL_CONFIG.VERSION})</div>
-        <div>{TERMINAL_CONFIG.CORPORATION} — {TERMINAL_CONFIG.YEAR}</div>
-        <div>{TERMINAL_CONFIG.STATION} Terminal</div>
+      <div className="fixed top-6 left-6 text-xs space-y-1">
+        <div className="flex items-center">
+          <span className="inline-block w-2 h-2 bg-[#FFD700] animate-pulse mr-2" />
+          <span>K.E.R.O.S. ({TERMINAL_CONFIG.VERSION})</span>
+        </div>
+        <div>{TERMINAL_CONFIG.CORPORATION}</div>
+        <div>Facility: {TERMINAL_CONFIG.STATION} [{TERMINAL_CONFIG.FACILITY_ID}]</div>
+        <div className="mt-4 opacity-75">
+          <div className="text-[10px] uppercase tracking-wider mb-1">Facility Status</div>
+          <div className="grid grid-cols-2 gap-x-4 gap-y-1">
+            <div>Core Temp: <span className="text-[#FF4500]">{TERMINAL_CONFIG.CORE_TEMP}</span></div>
+            <div>Q-Stability: <span className="text-[#90EE90]">{TERMINAL_CONFIG.QUANTUM_STABILITY}</span></div>
+            <div>Radiation: <span className="text-[#FF4500] animate-pulse">{TERMINAL_CONFIG.RADIATION_LEVEL}</span></div>
+            <div>Power: <span className="text-[#FFD700]">{TERMINAL_CONFIG.EMERGENCY_POWER}</span></div>
+          </div>
+        </div>
       </div>
-      <div className="fixed top-6 right-6 text-xs text-right z-50">
-        <div>TERMINAL STATUS: {isBooted ? 'ACTIVE' : 'BOOTING'}</div>
-        <div>UPTIME: {formatUptime(uptime)}</div>
-        <div>SECURITY: ENABLED</div>
+      <div className="fixed top-6 right-6 text-xs text-right z-50 space-y-1">
+        <div className="flex items-center justify-end">
+          <span>TERMINAL STATUS: </span>
+          <span className={`ml-2 ${isBooted ? 'text-[#90EE90]' : 'text-[#FF4500] animate-pulse'}`}>
+            {isBooted ? 'ACTIVE' : 'BOOTING'}
+          </span>
+        </div>
+        <div>UPTIME: <span className="font-bold">{formatUptime(uptime)}</span></div>
+        <div>LAST MAINTENANCE: <span className="text-[#FF4500]">{TERMINAL_CONFIG.LAST_MAINTENANCE}</span></div>
+        <div className="text-[#90EE90]">SECURITY: GAMMA CLEARANCE</div>
         <button 
           onClick={audioEnabled ? disableAudio : enableAudio}
-          className="mt-2 px-2 py-1 border border-[#FFD700] hover:bg-[#FFD700] hover:text-[#201700] relative z-50"
+          className="mt-4 px-2 py-1 border border-[#FFD700] hover:bg-[#FFD700] hover:text-[#201700] relative z-50 w-full"
         >
-          {audioEnabled ? 'MUTE AMBIENT' : 'ENABLE AMBIENT'}
+          {audioEnabled ? 'DISABLE AUDIO SYSTEMS' : 'ENABLE AUDIO SYSTEMS'}
         </button>
+      </div>
+
+      {/* Scanline and noise effects */}
+      <div className="fixed inset-0 pointer-events-none">
+        <div className="absolute inset-0 bg-scanline opacity-[0.15]" />
+        <div className="absolute inset-0 bg-noise animate-noise opacity-[0.08]" />
+      </div>
+
+      {/* Screen edge vignette effect */}
+      <div className="fixed inset-0 pointer-events-none">
+        <div className="absolute inset-0 bg-vignette opacity-50" />
+      </div>
+
+      {/* CRT screen curvature and glow */}
+      <div className="fixed inset-0 pointer-events-none">
+        <div className="absolute inset-0 screen-curve opacity-40" />
+        <div className="absolute inset-0 screen-glow" />
       </div>
 
       {/* Audio Elements
@@ -554,6 +627,7 @@ export default function ChatInterface() {
       <audio ref={audioRef} src={AUDIO_ASSETS.AMBIENT} muted={true} />
       <audio ref={audioRef2} src={AUDIO_ASSETS.AMBIENT} muted={true} />
       <audio ref={typingSoundRef} src={AUDIO_ASSETS.TYPING} muted={true} />
+      <audio ref={errorSoundRef} src={AUDIO_ASSETS.ERROR} muted={true} />
 
       {/* Message Display
           Scrollable container for chat messages with gradient overlay */}
@@ -578,11 +652,28 @@ export default function ChatInterface() {
               msg.role === 'assistant' ? '[TERMINAL]' :
               msg.role === 'user' ? '[USER]' :
               '[UNKNOWN]';
+
+            // Determine status indicator based on message content
+            const hasError = msg.content?.includes('[ERROR]');
+            const hasWarning = msg.content?.includes('[WARNING]') || msg.content?.includes('[ALERT]');
+            const statusClass = hasError ? 'status-critical' : 
+                              hasWarning ? 'status-warning' : 
+                              'status-stable';
+
             return (
-              <div key={i} className="space-y-1 relative">
-                <div className="text-xs opacity-50">{label}</div>
+              <div key={i} className="message-container">
+                <div className="text-xs opacity-50 flex items-center">
+                  <span className={`status-indicator ${statusClass}`} />
+                  {label}
+                  {msg.isStreaming && (
+                    <span className="ml-2 text-[#FFD700] animate-pulse">
+                      [PROCESSING...]
+                    </span>
+                  )}
+                </div>
                 <div 
-                  className="leading-relaxed glitch relative"
+                  className="leading-relaxed glitch relative mt-1"
+                  data-text={msg.displayedContent}
                   dangerouslySetInnerHTML={{ 
                     __html: md.render(msg.displayedContent || '') 
                   }}
@@ -592,7 +683,7 @@ export default function ChatInterface() {
                   <span className="inline-block w-2 h-4 bg-[#FFD700] animate-blink ml-1" />
                 )}
                 {msg.isComplete && (
-                  <div className="absolute inset-0 pointer-events-none phosphor-glow" />
+                  <div className="absolute inset-0 pointer-events-none phosphor-glow opacity-50" />
                 )}
               </div>
             );
