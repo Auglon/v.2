@@ -1,12 +1,13 @@
-# ┌──────────────────────────────────────────────────────────────────────────────┐
-# │                                                                              │
-# │  ░▒▓█ K.E.R.O.S. Terminal Interface █▓▒░                                     │
-# │  ======================================                                      │
-# │                                                                              │
-# │  A Next.js 14+ application simulating a retro-futuristic terminal interface  │
-# │  for AI interaction.                                                         │
-# │                                                                              │
-# └──────────────────────────────────────────────────────────────────────────────┘
+```markdown
+# ┌──────────────────────────────────────────────────────────────────────────────┐  
+# │                                                                              │  
+# │  ░▒▓█ K.E.R.O.S. Terminal Interface █▓▒░                                     │  
+# │  ======================================                                      │  
+# │                                                                              │  
+# │  A Next.js 14+ application simulating a retro-futuristic terminal interface  │  
+# │  for AI interaction.                                                         │  
+# │                                                                              │  
+# └──────────────────────────────────────────────────────────────────────────────┘  
 
 ## ╔══════════════════════════════════════════════════════════════════════════════╗
 ## ║  Overview                                                                    ║
@@ -14,12 +15,9 @@
 
  K.E.R.O.S. Terminal Interface is a Next.js application that provides an immersive, text-based user interface (TUI) experience reminiscent of classic terminal environments. It leverages modern web technologies to create a retro-styled AI interaction platform.
 
- The core of the application lies within:
+ The core of the application lies within ChatInterface.tsx
 
- ```typescript:app/components/ChatInterface.tsx
- startLine: 1
- endLine: 767
- ```
+
 
  This component is the heart of the user interaction, handling:
 
@@ -61,7 +59,7 @@
 ## ║  Folder Structure                                                            ║
 ## ╚══════════════════════════════════════════════════════════════════════════════╝
 
-```
+
  ├── app/
  │   ├── api/
  │   │   └── chat/
@@ -80,7 +78,7 @@
  ├── tsconfig.json               # TypeScript configuration
  ├── tailwind.config.js          # Tailwind CSS configuration
  └── README.md                   # This file
-```
+
 
 ## ╔══════════════════════════════════════════════════════════════════════════════╗
 ## ║  Prerequisites                                                               ║
@@ -209,8 +207,8 @@
  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  SOFTWARE.
+```
 
- ---
 
  **Thank you for exploring the K.E.R.O.S. Terminal Interface!**
 
