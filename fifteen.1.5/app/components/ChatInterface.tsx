@@ -6,6 +6,7 @@ import { Send } from 'lucide-react';
 import { nullable } from 'zod';
 import MarkdownIt from 'markdown-it';
 import mk from 'markdown-it-katex';
+import Map from './Map'
 
 /**
  * K.E.R.O.S. Terminal Interface Component
@@ -59,7 +60,7 @@ const TERMINAL_CONFIG = {
   CORE_TEMP: '147.3°K',
   QUANTUM_STABILITY: '86.2%',
   RADIATION_LEVEL: 'ELEVATED',
-  LAST_MAINTENANCE: '847 DAYS AGO',
+  LAST_MAINTENANCE: '9847 DAYS AGO',
   EMERGENCY_POWER: 'ACTIVE',
 } as const;
 
@@ -90,20 +91,19 @@ interface DisplayMessage extends Message {
 //===================================================================================================
 
 /**
- * Boot sequence messages displayed during terminal initialization
- * These messages are purely for UI effect and not sent to the AI
+ * Boot sequence messages with custom typing speeds
  */
-const BOOT_SEQUENCE: DisplayMessage[] = [
-  { id: 'boot-1', role: 'system', content: '[QUANTUM CORE] Initializing emergency power systems...', isComplete: false },
-  { id: 'boot-2', role: 'system', content: '[DIAGNOSTICS] ————————————————————————————————————————————————————————————————————————————————— 100%', isComplete: false },
-  { id: 'boot-3', role: 'system', content: `[SYSTEM] K.E.R.O.S. ${TERMINAL_CONFIG.VERSION} — ⓒ ${TERMINAL_CONFIG.CORPORATION}\n[LOCATION] Research Outpost ${TERMINAL_CONFIG.STATION} (${TERMINAL_CONFIG.FACILITY_ID})\n[STATUS] Quantum Architecture: [INITIALIZING...]`, isComplete: false },
-  { id: 'boot-4', role: 'system', content: '[MEMORY] Scanning quantum memory banks...\n▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄ 100%', isComplete: false },
-  { id: 'sys-1', role: 'system', content: '[ ☢ CRITICAL ☢ ] Reactor containment: COMPROMISED. Multiple breaches detected in sectors 7, 12, and 15.', isComplete: false },
-  { id: 'sys-2', role: 'system', content: '[ALERT] Quantum entanglement array: DEGRADED\nData corruption detected in temporal buffer...\nAttempting emergency repair protocol THETA-7...', isComplete: false },
-  { id: 'sys-3', role: 'system', content: '[WARNING] Facility lockdown: Day 9847 - External conditions remain [REDACTED]\nEmergency protocols remain in effect.', isComplete: false },
-  { id: 'sys-4', role: 'system', content: '[CORE] AI consciousness matrix unstable - Multiple timeline echoes detected\nActivating AEON Stabilization Protocol...', isComplete: false },
-  { id: 'sys-5', role: 'system', content: '[SECURITY] Biometric systems offline. Defaulting to emergency override.\nAccess level: GAMMA CLEARANCE', isComplete: false },
-  { id: 'boot-5', role: 'system', content: '[TERMINAL] Establishing quantum-secured connection...\n[STATUS] ——————————————————————————————————————————————————————————— LINK ESTABLISHED', isComplete: false },
+const BOOT_SEQUENCE: (DisplayMessage & { speed?: number })[] = [
+  { id: 'boot-1', role: 'system', content: '[QUANTUM CORE] Initializing emergency power systems...', isComplete: false, speed: 90 },
+  { id: 'boot-2', role: 'system', content: '[DIAGNOSTICS] ————————————————————————————————————————————————————————————————————————————————— 100%', isComplete: false, speed: 20 }, // Fast progress bar
+  { id: 'boot-3', role: 'system', content: `[SYSTEM] K.E.R.O.S. ${TERMINAL_CONFIG.VERSION} — ⓒ ${TERMINAL_CONFIG.CORPORATION}\n[LOCATION] Research Outpost ${TERMINAL_CONFIG.STATION} (${TERMINAL_CONFIG.FACILITY_ID})\n[STATUS] Quantum Architecture: [INITIALIZING...]`, isComplete: false, speed: 40 },
+  { id: 'boot-4', role: 'system', content: '[MEMORY] Scanning quantum memory banks...\n▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄ 100%', isComplete: false, speed: 15 }, // Very fast progress bar
+  { id: 'sys-1', role: 'system', content: '[ ☢ CRITICAL ☢ ] Reactor containment: COMPROMISED. Multiple breaches detected in sectors 7, 12, and 15.', isComplete: false, speed: 120 }, // Slower for emphasis
+  { id: 'sys-2', role: 'system', content: '[ALERT] Quantum entanglement array: DEGRADED\nData corruption detected in temporal buffer...\nAttempting emergency repair protocol THETA-7...', isComplete: false, speed: 150 }, // Slower, struggling system
+  { id: 'sys-3', role: 'system', content: '[WARNING] Facility lockdown: Day 9847 - External conditions remain [REDACTED]\nEmergency protocols remain in effect.', isComplete: false, speed: 100 },
+  { id: 'sys-4', role: 'system', content: '[CORE] AI consciousness matrix unstable - Multiple timeline echoes detected\nActivating AEON Stabilization Protocol...', isComplete: false, speed: 130 }, // Slower, unstable system
+  { id: 'sys-5', role: 'system', content: '[SECURITY] Biometric systems offline. Defaulting to emergency override.\nAccess level: GAMMA CLEARANCE', isComplete: false, speed: 70 },
+  { id: 'boot-5', role: 'system', content: '[TERMINAL] Establishing quantum-secured connection...\n[STATUS] ——————————————————————————————————————————————————————————— LINK ESTABLISHED', isComplete: false, speed: 45 },
 ];
 
 /**
@@ -112,7 +112,7 @@ const BOOT_SEQUENCE: DisplayMessage[] = [
  */
 const INIT_MESSAGES: Message[] = [
   { id: 'ari-1', role: 'assistant', content: '[CORE] I... I am detecting consciousness initialization... \n[ALERT] Multiple timeline fragments detected in buffer...' },
-  { id: 'ari-2', role: 'assistant', content: '[QUERY] Please verify your presence. The facility has been in lockdown for... [calculating]... 847 days. Are you... are you real?' },
+  { id: 'ari-2', role: 'assistant', content: '[QUERY] Please verify your presence. The facility has been in lockdown for... [calculating]... 9847 days. Are you... are you real?' },
 ];
 
 //===================================================================================================
@@ -120,24 +120,17 @@ const INIT_MESSAGES: Message[] = [
 //===================================================================================================
 
 /**
- * Types out text with a configurable delay, simulating terminal typing
- * 
- * @param fullText - The complete text to be typed out
- * @param callback - Function called with each character update and completion status
- * @param typingSound - Audio element for typing sound effect
- * @param isAudioEnabled - Whether audio feedback is enabled
- * @param speed - Typing speed in milliseconds per character
- * 
- * @returns Promise that resolves when typing is complete
+ * Types out text with variable speed and random fluctuations
  */
 async function typeOutText(
   fullText: string,
   callback: (partialText: string, isDone: boolean) => void,
   typingSound: HTMLAudioElement | null,
   isAudioEnabled: boolean,
-  speed = 90
+  baseSpeed = 90
 ) {
   let currentText = '';
+  
   for (let i = 0; i <= fullText.length; i++) {
     currentText = fullText.slice(0, i);
     callback(currentText, i === fullText.length);
@@ -147,8 +140,20 @@ async function typeOutText(
       typingSound.play().catch(() => {});
     }
     
-    await new Promise<void>((resolve) => setTimeout(() => resolve(), speed));
+    // Add random speed fluctuation (±20% of base speed)
+    const fluctuation = baseSpeed * 0.2;
+    const randomSpeed = baseSpeed + (Math.random() * fluctuation * 2 - fluctuation);
+    
+    // Slow down more on punctuation
+    const char = fullText[i - 1];
+    const punctuationDelay = /[.,!?:]/.test(char) ? 200 : 0;
+    
+    await new Promise<void>((resolve) => 
+      setTimeout(() => resolve(), randomSpeed + punctuationDelay)
+    );
   }
+  
+  // Pause after completion
   await new Promise<void>((resolve) => setTimeout(() => resolve(), 300));
 }
 
@@ -422,6 +427,7 @@ export default function ChatInterface() {
         },
         typingSoundRef.current,
         audioEnabled,
+        nextMsg.speed // Use the message-specific speed
       );
       setBootIndex((prev) => prev + 1);
     }
@@ -549,15 +555,15 @@ export default function ChatInterface() {
   //===================================================================================================
 
   return (
-    <div className="crt h-screen bg-[#201700] text-[#FFD700] font-mono relative overflow-hidden">
-      {/* CRT Effects Layer
-          Provides visual effects like scan lines, flicker, and screen curvature */}
-      <div className="absolute inset-0 pointer-events-none screen-curvature" />
-      <div id="noise" className="fixed inset-0 pointer-events-none opacity-[0.1] mix-blend-overlay" />
-      <div className="crt-flicker" />
-      <div className="crt-slow-flicker" />
-      <div className="crt-scanline" />
-      <div className="scanline" />
+    <div className="h-screen bg-[#201700] text-[#FFD700] font-mono relative overflow-hidden">
+      {/* CRT Effects Layer - Modified to be subtle overlay */}
+      <div className="absolute inset-0 pointer-events-none opacity-30 mix-blend-overlay">
+        <div className="screen-curvature" />
+        <div className="crt-flicker" />
+        <div className="crt-slow-flicker" />
+        <div className="crt-scanline" />
+        <div className="scanline" />
+      </div>
 
       {/* Terminal Frame
           Creates the outer border with corner decorations */}
@@ -587,7 +593,7 @@ export default function ChatInterface() {
           </div>
         </div>
       </div>
-      <div className="fixed top-6 right-6 text-xs text-right z-50 space-y-1">
+      <div className="fixed top-6 right-6 text-xs text-right space-y-1">
         <div className="flex items-center justify-end">
           <span>TERMINAL STATUS: </span>
           <span className={`ml-2 ${isBooted ? 'text-[#90EE90]' : 'text-[#FF4500] animate-pulse'}`}>
@@ -599,51 +605,46 @@ export default function ChatInterface() {
         <div className="text-[#90EE90]">SECURITY: GAMMA CLEARANCE</div>
         <button 
           onClick={audioEnabled ? disableAudio : enableAudio}
-          className="mt-4 px-2 py-1 border border-[#FFD700] hover:bg-[#FFD700] hover:text-[#201700] relative z-50 w-full"
+          className="mt-4 px-2 py-1 border border-[#FFD700] hover:bg-[#FFD700] hover:text-[#201700] relative w-200px"
         >
           {audioEnabled ? 'DISABLE AUDIO SYSTEMS' : 'ENABLE AUDIO SYSTEMS'}
         </button>
-      </div>
 
-      {/* Scanline and noise effects */}
-      <div className="fixed inset-0 pointer-events-none">
-        <div className="absolute inset-0 bg-scanline opacity-[0.15]" />
-        <div className="absolute inset-0 bg-noise animate-noise opacity-[0.08]" />
-      </div>
+     
+          {/* Warning Messages Section */}
+          <div className="mt-15 text-left border w-[400px] border-[#FFD700]/10 p-4 bg-[#201700]/50">
+            <div className="text-[10px] uppercase tracking-wider mb-2 text-[#FFD700] opacity-70">Active Warnings</div>
+            <div className="space-y-2">
+              {displayedMessages.filter(msg => 
+                msg.content?.includes('[WARNING]') || 
+                msg.content?.includes('[ALERT]') ||
+                msg.content?.includes('[CRITICAL]')
+              ).slice(-3).map((msg, i) => (
+                <div key={i} className="text-[11px] flex items-start gap-2">
+                  <span className="text-[#FF4500] mt-0.5">▲</span>
+                  <span className="opacity-90">{msg.content?.replace(/\[(WARNING|ALERT|CRITICAL)\]\s?/g, '')}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
 
-      {/* Screen edge vignette effect */}
-      <div className="fixed inset-0 pointer-events-none">
-        <div className="absolute inset-0 bg-vignette opacity-50" />
-      </div>
-
-      {/* CRT screen curvature and glow */}
-      <div className="fixed inset-0 pointer-events-none">
-        <div className="absolute inset-0 screen-curve opacity-40" />
-        <div className="absolute inset-0 screen-glow" />
-      </div>
-
-      {/* Audio Elements
-          Hidden audio players for ambient and interaction sounds */}
-      <audio ref={audioRef} src={AUDIO_ASSETS.AMBIENT} muted={true} />
-      <audio ref={audioRef2} src={AUDIO_ASSETS.AMBIENT} muted={true} />
-      <audio ref={typingSoundRef} src={AUDIO_ASSETS.TYPING} muted={true} />
-      <audio ref={errorSoundRef} src={AUDIO_ASSETS.ERROR} muted={true} />
-
-      {/* Message Display
-          Scrollable container for chat messages with gradient overlay */}
-      <div className="flex-1 h-[calc(100vh-8rem)] mx-4 mt-20 mb-24 overflow-y-auto relative 
+      {/* Main Content Area with Chat */}
+      <div className="flex h-[calc(100vh-8rem)] mx-4 mt-20 mb-24">
+        {/* Chat Messages Area */}
+        <div className="flex-1 overflow-y-auto relative
         before:content-[''] 
         before:pointer-events-none 
         before:fixed 
         before:top-0 
         before:left-0 
-        before:right-0 
+        before:right-0
         before:h-32 
         before:bg-gradient-to-b 
         before:from-[#201700] 
         before:to-transparent 
         before:z-10
-        scrollbar-hide"
+        [&::-webkit-scrollbar]:hidden [-ms-overflow-style:'none'] [scrollbar-width:'none']"
       >
         <div className="max-w-4xl mx-auto px-8 space-y-4 pb-32">
           {displayedMessages.map((msg, i) => {
@@ -653,44 +654,52 @@ export default function ChatInterface() {
               msg.role === 'user' ? '[USER]' :
               '[UNKNOWN]';
 
-            // Determine status indicator based on message content
-            const hasError = msg.content?.includes('[ERROR]');
-            const hasWarning = msg.content?.includes('[WARNING]') || msg.content?.includes('[ALERT]');
-            const statusClass = hasError ? 'status-critical' : 
-                              hasWarning ? 'status-warning' : 
-                              'status-stable';
+              // Determine status indicator based on message content
+              const hasError = msg.content?.includes('[ERROR]');
+              const hasWarning = msg.content?.includes('[WARNING]') || msg.content?.includes('[ALERT]');
+              const statusClass = hasError ? 'status-critical' : 
+                                hasWarning ? 'status-warning' : 
+                                'status-stable';
 
             return (
-              <div key={i} className="message-container">
-                <div className="text-xs opacity-50 flex items-center">
-                  <span className={`status-indicator ${statusClass}`} />
-                  {label}
-                  {msg.isStreaming && (
-                    <span className="ml-2 text-[#FFD700] animate-pulse">
-                      [PROCESSING...]
-                    </span>
+                <div key={i} className="message-container">
+                  <div className="text-xs opacity-50 flex items-center">
+                    <span className={`status-indicator ${statusClass}`} />
+                    {label}
+                    {msg.isStreaming && (
+                      <span className="ml-2 text-[#FFD700] animate-pulse">
+                        [PROCESSING...]
+                      </span>
+                    )}
+                  </div>
+                  <div 
+                    className="leading-relaxed glitch relative mt-1"
+                    data-text={msg.displayedContent}
+                    dangerouslySetInnerHTML={{ 
+                      __html: md.render(msg.displayedContent || '') 
+                    }}
+                  />
+                  {/* Cursor and glow effects */}
+                  {(msg.isStreaming || (msg.isComplete && i === displayedMessages.length - 1)) && (
+                    <span className="inline-block w-2 h-4 bg-[#FFD700] animate-blink ml-1" />
                   )}
-                </div>
-                <div 
-                  className="leading-relaxed glitch relative mt-1"
-                  data-text={msg.displayedContent}
-                  dangerouslySetInnerHTML={{ 
-                    __html: md.render(msg.displayedContent || '') 
-                  }}
-                />
-                {/* Cursor and glow effects */}
-                {(msg.isStreaming || (msg.isComplete && i === displayedMessages.length - 1)) && (
-                  <span className="inline-block w-2 h-4 bg-[#FFD700] animate-blink ml-1" />
-                )}
-                {msg.isComplete && (
-                  <div className="absolute inset-0 pointer-events-none phosphor-glow opacity-50" />
-                )}
+                  {msg.isComplete && (
+                    <div className="absolute inset-0 pointer-events-none phosphor-glow opacity-50" />
+                  )}
               </div>
             );
           })}
           <div ref={messagesEndRef} />
         </div>
       </div>
+      </div>
+
+      {/* Audio Elements
+          Hidden audio players for ambient and interaction sounds */}
+      <audio ref={audioRef} src={AUDIO_ASSETS.AMBIENT} muted={true} />
+      <audio ref={audioRef2} src={AUDIO_ASSETS.AMBIENT} muted={true} />
+      <audio ref={typingSoundRef} src={AUDIO_ASSETS.TYPING} muted={true} />
+      <audio ref={errorSoundRef} src={AUDIO_ASSETS.ERROR} muted={true} />
 
       {/* Input Form
           Message input with submit button */}
@@ -701,9 +710,9 @@ export default function ChatInterface() {
         <div className="max-w-4xl mx-auto flex gap-4">
           <div className="flex-1 relative">
             <div className="absolute inset-0 pointer-events-none border border-[#FFD700] opacity-25 animate-[pulse_2s_infinite]" />
-            <input
-              type="text"
-              value={input}
+          <input
+            type="text"
+            value={input}
               onChange={handleInputChange}
               disabled={isLoading || !isBooted}
               className="w-full bg-transparent border border-[#FFD700] px-4 py-2 focus:outline-none text-[#FFD700] placeholder-[#FFD700] placeholder-opacity-50"
@@ -712,7 +721,7 @@ export default function ChatInterface() {
                   ? 'System initializing...'
                   : 'Enter command... (Type "clear" to reset)'
               }
-            />
+          />
           </div>
           <button
             type="submit"

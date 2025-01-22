@@ -1,24 +1,35 @@
 import { useRef, useEffect } from "react"
 
-export function useAudio(url: string) {
-  const audio = useRef<HTMLAudioElement | null>(null)
+export function useAudio(src: string) {
+  const audioRef = useRef<HTMLAudioElement | null>(null)
 
   useEffect(() => {
-    audio.current = new Audio(url)
-  }, [url])
+    audioRef.current = new Audio(src)
+    audioRef.current.loop = true
+    return () => {
+      if (audioRef.current) {
+        audioRef.current.pause()
+        audioRef.current = null
+      }
+    }
+  }, [src])
 
   const play = () => {
-    if (audio.current) {
-      audio.current.play()
+    if (audioRef.current && audioRef.current.paused) {
+      audioRef.current.play().catch(() => {
+        // Handle autoplay restrictions
+        console.warn('Audio playback was prevented by the browser')
+      })
     }
   }
 
-  const pause = () => {
-    if (audio.current) {
-      audio.current.pause()
+  const stop = () => {
+    if (audioRef.current && !audioRef.current.paused) {
+      audioRef.current.pause()
+      audioRef.current.currentTime = 0
     }
   }
 
-  return { play, pause }
+  return { play, stop }
 }
 

@@ -1,0 +1,361 @@
+@keyframes flicker {
+  0% {
+    opacity: 0.98;
+  }
+  5% {
+    opacity: 0.95;
+  }
+  10% {
+    opacity: 0.9;
+  }
+  15% {
+    opacity: 0.85;
+  }
+  20% {
+    opacity: 0.95;
+  }
+  25% {
+    opacity: 0.94;
+  }
+  30% {
+    opacity: 0.98;
+  }
+  35% {
+    opacity: 0.93;
+  }
+  40% {
+    opacity: 0.99;
+  }
+  45% {
+    opacity: 0.97;
+  }
+  50% {
+    opacity: 0.94;
+  }
+  55% {
+    opacity: 0.96;
+  }
+  60% {
+    opacity: 0.98;
+  }
+  65% {
+    opacity: 0.95;
+  }
+  70% {
+    opacity: 0.97;
+  }
+  75% {
+    opacity: 0.93;
+  }
+  80% {
+    opacity: 0.96;
+  }
+  85% {
+    opacity: 0.98;
+  }
+  90% {
+    opacity: 0.95;
+  }
+  95% {
+    opacity: 0.96;
+  }
+  100% {
+    opacity: 0.99;
+  }
+}
+
+@keyframes scanline {
+  0% {
+    transform: translateY(0px);
+  }
+  100% {
+    transform: translateY(100vh);
+  }
+}
+
+@keyframes blink {
+  0% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+@keyframes noise {
+  0%,
+  100% {
+    background-position: 0 0;
+  }
+  10% {
+    background-position: -5% -10%;
+  }
+  20% {
+    background-position: -15% 5%;
+  }
+  30% {
+    background-position: 7% -25%;
+  }
+  40% {
+    background-position: 20% 25%;
+  }
+  50% {
+    background-position: -25% 10%;
+  }
+  60% {
+    background-position: 15% 5%;
+  }
+  70% {
+    background-position: 0% 15%;
+  }
+  80% {
+    background-position: 25% 35%;
+  }
+  90% {
+    background-position: -10% 10%;
+  }
+}
+
+.terminal {
+  background-color: #0d0d0d;
+  color: #ffb000;
+  font-family: "IBM Plex Mono", monospace;
+  text-shadow: 0 0 5px #c8c8c8;
+  position: relative;
+  overflow: hidden;
+}
+
+.terminal::before {
+  content: "";
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: repeating-linear-gradient(
+    0deg,
+    rgba(0, 0, 0, 0.15),
+    rgba(0, 0, 0, 0.15) 1px,
+    transparent 1px,
+    transparent 2px
+  );
+  pointer-events: none;
+}
+
+.terminal::after {
+  content: "";
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 3px;
+  background: rgba(255, 255, 255, 0.1);
+  animation: scanline 6s linear infinite;
+  pointer-events: none;
+}
+
+.noise {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-image: url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADIAAAAyBAMAAADsEZWCAAAAGFBMVEUAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAMABA+AAAACHRSTlMzMzMzMzMzM85JBgUAAAAJcEhZcwAADsQAAA7EAZUrDhsAAAAwSURBVDjLY2AYBaNg8ANTC4Q0MCg0gEkJoNgBQ2oAhDQwKDQAkyAFuNQOglE0CgYYAACaWQ+d7nO2/QAAAABJRU5ErkJggg==");
+  background-repeat: repeat;
+  opacity: 0.05;
+  animation: noise 0.5s steps(2) infinite;
+  pointer-events: none;
+}
+
+.glitch {
+  position: relative;
+  animation: glitch-skew 1s infinite linear alternate-reverse;
+}
+
+.glitch::before,
+.glitch::after {
+  content: attr(data-text);
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.glitch::before {
+  left: 2px;
+  text-shadow: -2px 0 #ff0000;
+  clip: rect(44px, 450px, 56px, 0);
+  animation: glitch-anim 5s infinite linear alternate-reverse;
+}
+
+.glitch::after {
+  left: -2px;
+  text-shadow: -2px 0 #00ff00;
+  clip: rect(44px, 450px, 56px, 0);
+  animation: glitch-anim2 5s infinite linear alternate-reverse;
+}
+
+@keyframes glitch-anim {
+  0% {
+    clip: rect(8px, 9999px, 72px, 0);
+    transform: skew(0.56deg);
+  }
+  5% {
+    clip: rect(86px, 9999px, 98px, 0);
+    transform: skew(0.93deg);
+  }
+  10% {
+    clip: rect(74px, 9999px, 95px, 0);
+    transform: skew(0.03deg);
+  }
+  15% {
+    clip: rect(27px, 9999px, 44px, 0);
+    transform: skew(0.09deg);
+  }
+  20% {
+    clip: rect(83px, 9999px, 74px, 0);
+    transform: skew(0.67deg);
+  }
+  25% {
+    clip: rect(92px, 9999px, 67px, 0);
+    transform: skew(0.82deg);
+  }
+  30% {
+    clip: rect(62px, 9999px, 72px, 0);
+    transform: skew(0.44deg);
+  }
+  35% {
+    clip: rect(27px, 9999px, 64px, 0);
+    transform: skew(0.86deg);
+  }
+  40% {
+    clip: rect(25px, 9999px, 33px, 0);
+    transform: skew(0.33deg);
+  }
+  45% {
+    clip: rect(44px, 9999px, 89px, 0);
+    transform: skew(0.12deg);
+  }
+  50% {
+    clip: rect(89px, 9999px, 99px, 0);
+    transform: skew(0.78deg);
+  }
+  55% {
+    clip: rect(19px, 9999px, 96px, 0);
+    transform: skew(0.53deg);
+  }
+  60% {
+    clip: rect(94px, 9999px, 44px, 0);
+    transform: skew(0.22deg);
+  }
+  65% {
+    clip: rect(62px, 9999px, 11px, 0);
+    transform: skew(0.69deg);
+  }
+  70% {
+    clip: rect(98px, 9999px, 44px, 0);
+    transform: skew(0.4deg);
+  }
+  75% {
+    clip: rect(35px, 9999px, 23px, 0);
+    transform: skew(0.86deg);
+  }
+  80% {
+    clip: rect(67px, 9999px, 98px, 0);
+    transform: skew(0.94deg);
+  }
+  85% {
+    clip: rect(73px, 9999px, 42px, 0);
+    transform: skew(0.13deg);
+  }
+  90% {
+    clip: rect(67px, 9999px, 78px, 0);
+    transform: skew(0.14deg);
+  }
+  95% {
+    clip: rect(40px, 9999px, 93px, 0);
+    transform: skew(0.34deg);
+  }
+  100% {
+    clip: rect(80px, 9999px, 19px, 0);
+    transform: skew(0.67deg);
+  }
+}
+
+.power-off {
+  animation: power-off 0.4s ease-out forwards;
+}
+
+@keyframes power-off {
+  0% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  60% {
+    transform: scale(1.0, 0.001);
+    opacity: 0.8;
+  }
+  100% {
+    transform: scale(0, 0.001);
+    opacity: 0;
+  }
+}
+
+.warning-pulse {
+  animation: warning-pulse 2s infinite;
+}
+
+@keyframes warning-pulse {
+  0% {
+    background-color: rgba(255, 0, 0, 0);
+  }
+  50% {
+    background-color: rgba(255, 0, 0, 0.2);
+  }
+  100% {
+    background-color: rgba(255, 0, 0, 0);
+  }
+}
+
+.static-burst {
+  position: relative;
+}
+
+.static-burst::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: white;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.static-burst.active::before {
+  animation: static-burst 0.1s steps(1) forwards;
+}
+
+@keyframes static-burst {
+  0% {
+    opacity: 0.3;
+  }
+  25% {
+    opacity: 0.1;
+  }
+  50% {
+    opacity: 0.3;
+  }
+  75% {
+    opacity: 0.1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
