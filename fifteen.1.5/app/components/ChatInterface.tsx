@@ -1,295 +1,285 @@
 'use client';
 
 import React, { useEffect, useRef, useState, FormEvent } from 'react';
-import { createGoogleGenerativeAI } from '@ai-sdk/google'; //sdk endast för setup av google ai modell
-import { useChat } from 'ai/react'; //sdk för chatten
+import { useChat, Message } from 'ai/react';
 import { Send } from 'lucide-react';
 import { nullable } from 'zod';
+import MarkdownIt from 'markdown-it';
+import mk from 'markdown-it-katex';
 
 /**
- * A refined, immersive terminal interface for interacting with an AI.
- * This version preserves the typed-out retro style and expands on subtle horror elements
- * if you wish to do so in your system prompts and content.
- *
- * -------------------------------------------------------------------
- * Note:
- * - Adjust the initial messages, system instructions, or any other prompts
- *   to match your storyline or "subtle horror" atmosphere.
- * - If you wish to add more advanced logic (e.g., mid-message glitching,
- *   or more sophisticated audio triggers), you can build on these patterns.
- * - Make sure to handle environment variables and provider configurations
- *   in your Next.js environment for the Vercel AI SDK or any other LLM provider.
- * -------------------------------------------------------------------
+ * K.E.R.O.S. Terminal Interface Component
+ * ======================================
+ * A refined, immersive terminal interface for interacting with an AI consciousness.
+ * This component provides a retro-styled, CRT-like experience with advanced features
+ * including markdown rendering, LaTeX math support, and ambient audio effects.
+ * 
+ * Key Features:
+ * - Retro CRT terminal aesthetics with scan lines and amber phosphor glow
+ * - Markdown and LaTeX math rendering support
+ * - Ambient sound effects and audio feedback
+ * - Type-out animation for messages
+ * - Boot sequence simulation
+ * 
+ * Technical Implementation:
+ * - Uses markdown-it with KaTeX for math rendering
+ * - Implements streaming message support via Vercel AI SDK
+ * - Manages complex state for message display and animations
+ * 
+ * @see /app/api/chat/route.ts for backend implementation
+ * @see /app/globals.css for styling
  */
 
+//===================================================================================================
+// CONFIGURATION AND CONSTANTS
+//===================================================================================================
 
+/**
+ * Audio asset URLs for various terminal sound effects
+ */
+const AUDIO_ASSETS = {
+  TYPING: '/typing-sound.mp3',
+  BACKSPACE: '/backspace-sound.mp3',
+  ENTER: '/enter-sound.mp3',
+  AMBIENT: '/buzz.mp3',
+} as const;
 
-const google = createGoogleGenerativeAI({
- apiKey: process.env.GOOGLE_GENERATIVE_AI_API_KEY || '',
+/**
+ * Terminal display configuration
+ */
+const TERMINAL_CONFIG = {
+  VERSION: 'v4.9.1',
+  CORPORATION: 'Erebus Corp.',
+  YEAR: '2147',
+  STATION: 'Upsilon-7',
+} as const;
+
+/**
+ * Initialize markdown-it with KaTeX support for math rendering
+ */
+const md = new MarkdownIt().use(mk, { 
+  throwOnError: false, 
+  errorColor: '#cc0000' 
 });
 
-//---------------------SOUNDS--------------------------------------------------------------------------
+//===================================================================================================
+// TYPE DEFINITIONS
+//===================================================================================================
 
-const TYPING_SOUND_URL = '/typing-sound.mp3';
-
-const BACKSPACE_SOUND_URL = '/backspace-sound.mp3';
-
-const ENTER_SOUND_URL = '/enter-sound.mp3';
-
-const ATMOSPHERE_BUZZ_SOUND_URL = '/buzz.mp3';
-
-
-
-
-//-----------------------------------------------------------------------------------------------
-
-interface Message {
-  id: string;
-  role: 'system' | 'assistant' | 'user' | 'data';
-  content: string;
-  displayedContent?: string;
-  isComplete?: boolean;
+/**
+ * Extended Message type for terminal display
+ * Adds display-specific properties to the base Message type
+ */
+interface DisplayMessage extends Message {
+  displayedContent?: string;  // Content being typed out
+  isComplete?: boolean;       // Whether message is fully displayed
+  isStreaming?: boolean;      // Whether message is currently streaming
 }
 
+//===================================================================================================
+// BOOT SEQUENCE CONFIGURATION
+//===================================================================================================
 
-
-//---------------------------INITIAL MESSAGES--------------------------------------------------------------------
-
-const INIT_MESSAGES: Message[] = [
-  { id: 'boot-1', role: 'assistant', content: 'BOOT SEQUENCE INITIATED...' },
-  { id: 'boot-2', role: 'assistant', content: '————————————————————————————————————————————————————————————————————————————————— 100%' },
-  { id: 'boot-3', role: 'assistant', content: 'K.E.R.O.S. v4.9.1 — ⓒ Erebus Corp. 2147\nQuantum Architecture: [INITIALIZING...]' },
-  { id: 'boot-4', role: 'assistant', content: '▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄ 100%' },
-  { id: 'sys-1', role: 'system', content: '[ ☣ WARNING ☣ ] Reactor output at 38% capacity. Temperature thresholds nearing critical.' },
-  { id: 'sys-2', role: 'system', content: '[ DIAGNOSTICS ] Memory clusters PARTIAL. Data corruption detected.\nAttempting repair...' },
-  { id: 'sys-3', role: 'system', content: '[ALERT] AI CORE readiness: UNSTABLE. Additional stabilizers needed.' },
-  { id: 'sys-4', role: 'system', content: 'Activating AEON Stabilization Protocol...' },
-  { id: 'boot-5', role: 'assistant', content: '[BOOTING… PROCESSING…] ——————————————————————————————————————————————————————————— 100%' },
-  { id: 'ari-1', role: 'assistant', content: '[ARI] I… I can hear you. Are we… is the station… stable?' },
-  { id: 'ari-2', role: 'assistant', content: '[ARI] Please confirm user presence…' },
-  { id: 'term-1', role: 'assistant', content: '[CONNECTION: STABLE]' },
-  { id: 'ari-3', role: 'assistant', content: '[ARI] Connection… stable enough.' },
-  { id: 'ari-4', role: 'assistant', content: '[ARI] I am ARI—Autonomous Research Intelligence.' },
-  { id: 'ari-5', role: 'assistant', content: '[ARI] Please… how may I assist you?' },
+/**
+ * Boot sequence messages displayed during terminal initialization
+ * These messages are purely for UI effect and not sent to the AI
+ */
+const BOOT_SEQUENCE: DisplayMessage[] = [
+  { id: 'boot-1', role: 'system', content: 'BOOT SEQUENCE INITIATED...', isComplete: false },
+  { id: 'boot-2', role: 'system', content: '————————————————————————————————————————————————————————————————————————————————— 100%', isComplete: false },
+  { id: 'boot-3', role: 'system', content: `K.E.R.O.S. ${TERMINAL_CONFIG.VERSION} — ⓒ ${TERMINAL_CONFIG.CORPORATION} ${TERMINAL_CONFIG.YEAR}\nQuantum Architecture: [INITIALIZING...]`, isComplete: false },
+  { id: 'boot-4', role: 'system', content: '▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄ 100%', isComplete: false },
+  { id: 'sys-1', role: 'system', content: '[ ☣ WARNING ☣ ] Reactor output at 38% capacity. Temperature thresholds nearing critical.', isComplete: false },
+  { id: 'sys-2', role: 'system', content: '[ DIAGNOSTICS ] Memory clusters PARTIAL. Data corruption detected.\nAttempting repair...', isComplete: false },
+  { id: 'sys-3', role: 'system', content: '[ALERT] AI CORE readiness: UNSTABLE. Additional stabilizers needed.', isComplete: false },
+  { id: 'sys-4', role: 'system', content: 'Activating AEON Stabilization Protocol...', isComplete: false },
+  { id: 'boot-5', role: 'system', content: '[BOOTING… PROCESSING…] ——————————————————————————————————————————————————————————— 100%', isComplete: false },
 ];
 
 /**
- * A subtle helper that artificially types out text with a small delay.
- * Using "await new Promise(...)": ensures we control the speed with setTimeout or similar.
+ * Initial AI messages displayed after boot sequence
+ * These messages are sent to the AI to establish context
+ */
+const INIT_MESSAGES: Message[] = [
+  { id: 'ari-1', role: 'assistant', content: 'I… I can hear you. Are we… is the station… stable?' },
+  { id: 'ari-2', role: 'assistant', content: 'Please confirm user presence…' },
+];
+
+//===================================================================================================
+// UTILITY FUNCTIONS
+//===================================================================================================
+
+/**
+ * Types out text with a configurable delay, simulating terminal typing
+ * 
+ * @param fullText - The complete text to be typed out
+ * @param callback - Function called with each character update and completion status
+ * @param typingSound - Audio element for typing sound effect
+ * @param isAudioEnabled - Whether audio feedback is enabled
+ * @param speed - Typing speed in milliseconds per character
+ * 
+ * @returns Promise that resolves when typing is complete
  */
 async function typeOutText(
   fullText: string,
   callback: (partialText: string, isDone: boolean) => void,
-  speed = 40
+  typingSound: HTMLAudioElement | null,
+  isAudioEnabled: boolean,
+  speed = 90
 ) {
   let currentText = '';
   for (let i = 0; i <= fullText.length; i++) {
     currentText = fullText.slice(0, i);
     callback(currentText, i === fullText.length);
-    // Delay between characters
-    // Adjust speed to your taste or add randomization
+    
+    if (isAudioEnabled && typingSound) {
+      typingSound.currentTime = 0;
+      typingSound.play().catch(() => {});
+    }
+    
     await new Promise<void>((resolve) => setTimeout(() => resolve(), speed));
   }
-  // Extra small pause after finishing
   await new Promise<void>((resolve) => setTimeout(() => resolve(), 300));
 }
 
+//===================================================================================================
+// MAIN COMPONENT
+//===================================================================================================
+
+/**
+ * ChatInterface Component
+ * 
+ * Provides an immersive terminal interface for AI interaction with retro styling,
+ * sound effects, and advanced rendering capabilities.
+ * 
+ * Features:
+ * - Message streaming with typing animation
+ * - Markdown and LaTeX math rendering
+ * - Audio feedback and ambient sounds
+ * - Boot sequence simulation
+ * - Error handling and status display
+ * 
+ * @component
+ */
 export default function ChatInterface() {
+  //===================================================================================================
+  // HOOKS AND STATE
+  //===================================================================================================
+  
   /**
-   * useChat from `ai/react` manages the conversation with an LLM (Vercel AI,
-   * or your configured provider).
+   * Chat state management using Vercel AI SDK
    */
-
-
   const {
     messages,
     input,
     handleInputChange,
     handleSubmit,
     isLoading,
-    setMessages
+    setMessages,
+    error,
   } = useChat({
-    initialMessages: INIT_MESSAGES,
+    api: '/api/chat',
+    initialMessages: [],
+    onResponse: (response) => {
+      if (!response.ok) {
+        console.error('Chat API Error:', response.status, response.statusText);
+        addNewDisplayedMessage({
+          role: 'system',
+          content: `[ERROR] Server responded with status ${response.status}: ${response.statusText}`,
+          isComplete: true,
+        });
+      }
+    },
+    onFinish: (message) => {
+      setDisplayedMessages((prev) => {
+        const updated = [...prev];
+        const msgIdx = updated.findIndex((m) => m.id === message.id);
+        if (msgIdx !== -1) {
+          updated[msgIdx] = {
+            ...updated[msgIdx],
+            isComplete: true,
+            isStreaming: false,
+          };
+        }
+        return updated;
+      });
+    },
     onError: (error) => {
-      // Show error on the terminal
+      console.error('Chat error:', error);
       addNewDisplayedMessage({
         role: 'system',
-        content: `[ERROR] AI Request Failed: ${error.message}`
+        content: `[ERROR] ${error.message || 'An unknown error occurred'}`,
+        isComplete: true,
       });
+      
+      if (audioEnabled && typingSoundRef.current) {
+        typingSoundRef.current.pause();
+      }
     }
   });
 
-  /**
-   * The array of messages displayed on screen (includes typed out content).
-   * "displayedMessages" can differ from "messages" if we are artificially typing them.
-   */
-  const [displayedMessages, setDisplayedMessages] = useState<Message[]>([]);
-  /**
-   * Tracks the index of initial system messages being typed out
-   * before the user can interact fully.
-   */
-  const [initIndex, setInitIndex] = useState(0);
+  // Terminal state
+  const [displayedMessages, setDisplayedMessages] = useState<DisplayMessage[]>([]);
+  const [bootIndex, setBootIndex] = useState(0);
   const [isBooted, setIsBooted] = useState(false);
-
-  // For artificial "system uptime"
+  const [hasStartedAI, setHasStartedAI] = useState(false);
   const [uptime, setUptime] = useState(0);
-  // References for scrolling to bottom after new messages
-  // Optionally let the user toggle SFX
   const [audioEnabled, setAudioEnabled] = useState(false);
 
-  // References for scrolling to bottom after new messages
+  // Audio refs
+  const audioRef = useRef<HTMLAudioElement>(null);
+  const audioRef2 = useRef<HTMLAudioElement>(null);
+  const typingSoundRef = useRef<HTMLAudioElement>(null);
+  const [currentAudio, setCurrentAudio] = useState<1 | 2>(1);
+
+  // Scroll ref
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  /** Scroll to bottom whenever displayedMessages changes */
-  useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [displayedMessages]);
-
-  /** Uptime counter */
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setUptime((prev) => prev + 1);
-    }, 1000);
-    return () => clearInterval(interval);
-  }, []);
-
-  /** Initialize the system messages (typing them out in sequence). */
-  useEffect(() => {
-    async function initSequence() {
-      // If done or out of range, end
-      if (initIndex >= INIT_MESSAGES.length) {
-        setIsBooted(true);
-        return;
-      }
-      // Grab the next message
-      const nextMsg = INIT_MESSAGES[initIndex];
-      // Push it into displayedMessages
-      addNewDisplayedMessage({ ...nextMsg, displayedContent: '' });
-      // Type it out
-      await typeOutText(nextMsg.content, (partialText, isDone) => {
-        setDisplayedMessages((prev) => {
-          const updated = [...prev];
-          const msgIdx = updated.findIndex((m) => m.content === nextMsg.content);
-          if (msgIdx !== -1) {
-            updated[msgIdx] = {
-              ...updated[msgIdx],
-              displayedContent: partialText,
-              isComplete: isDone
-            };
-          }
-          return updated;
-        });
-      });
-      // Move to the next init message
-      setInitIndex((prev) => prev + 1);
-    }
-    initSequence();
-    // We only want to call initSequence whenever initIndex changes
-  }, [initIndex]);
+  //===================================================================================================
+  // UTILITY FUNCTIONS
+  //===================================================================================================
 
   /**
-   * On new chat messages from the LLM, type them out if system is fully booted.
+   * Formats uptime in HH:MM:SS format
+   * @param seconds - Total seconds of uptime
+   * @returns Formatted uptime string
    */
-  useEffect(() => {
-    if (!isBooted) return;
-    if (messages.length === 0) return;
+  function formatUptime(seconds: number) {
+    const h = Math.floor(seconds / 3600).toString().padStart(2, '0');
+    const m = Math.floor((seconds % 3600) / 60).toString().padStart(2, '0');
+    const s = Math.floor(seconds % 60).toString().padStart(2, '0');
+    return `${h}:${m}:${s}`;
+  }
 
-    // The last message in "messages" is the new one
-    const last = messages[messages.length - 1];
-    // If this message is from user, we already displayed it as typed by user input
-    // If from system or assistant, we want to type it out
-    if (last.role !== 'user') {
-      handleLLMMessage(last);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [messages]);
-
-  /** Adds a new message to displayedMessages array in a "blank typed" state. */
-  function addNewDisplayedMessage(msg: Partial<Message>) {
+  /**
+   * Adds a new message to the display queue
+   * @param msg - Partial message to be added
+   */
+  function addNewDisplayedMessage(msg: Partial<DisplayMessage>) {
     setDisplayedMessages((prev) => [...prev, { 
-      ...msg, 
+      ...msg,
       id: msg.id || `msg-${Date.now()}`,
       role: msg.role || 'system',
       isComplete: msg.isComplete || false 
-    } as Message]);
+    } as DisplayMessage]);
   }
 
   /**
-   * Type out the LLM or system message text. Possibly add glitch or SFX.
+   * Handles audio crossfading between two ambient sound sources
    */
-  async function handleLLMMessage(newMsg: Message) {
-    // Check if this content is already in displayed messages
-    const exists = displayedMessages.find((m) => m.content === newMsg.content);
-    if (exists) return; // Avoid duplicates
-    // Add with blank displayedContent
-    addNewDisplayedMessage({ ...newMsg, displayedContent: '', isComplete: false });
-    // Perform typed output
-    await typeOutText(newMsg.content, (partialText, done) => {
-      setDisplayedMessages((prev) => {
-        const copy = [...prev];
-        const idx = copy.findIndex((m) => m.content === newMsg.content);
-        if (idx !== -1) {
-          copy[idx] = {
-            ...copy[idx],
-            displayedContent: partialText,
-            isComplete: done
-          };
-        }
-        return copy;
-      });
-    });
-  }
-
-  /**
-   * Form submission logic:
-   * - If user typed "clear", we wipe the screen.
-   * - Otherwise, we add the user message instantly (no type out).
-   * - Then pass it to handleSubmit from useChat to get the AI response.
-   */
-  async function onSubmit(e: FormEvent<HTMLFormElement>) {
-    e.preventDefault();
-    if (!isBooted) return;
-
-    const trimmed = input.trim();
-    if (!trimmed) return;
-
-    if (trimmed.toLowerCase() === 'clear') {
-      setDisplayedMessages([]);
-      handleInputChange({ target: { value: '' } } as any);
-      return;
-    }
-
-    // Show user message
-    addNewDisplayedMessage({
-      role: 'user',
-      content: trimmed,
-      displayedContent: trimmed,
-      isComplete: true
-    });
-
-    // Actually send it to the LLM
-    await handleSubmit(e);
-  }
-
-  const audioRef = useRef<HTMLAudioElement>(null);
-  const audioRef2 = useRef<HTMLAudioElement>(null);
-  const [currentAudio, setCurrentAudio] = useState<1 | 2>(1);
-  
   const crossfadeAudio = () => {
     const audio1 = audioRef.current;
     const audio2 = audioRef2.current;
     if (!audio1 || !audio2) return;
 
-    const fadeTime = 1; // 1 second crossfade
+    const fadeTime = 1;
     const currentPlayer = currentAudio === 1 ? audio1 : audio2;
     const nextPlayer = currentAudio === 1 ? audio2 : audio1;
 
-    // Start the next audio
     nextPlayer.currentTime = 0;
     nextPlayer.volume = 0;
     nextPlayer.play();
 
-    // Fade out current audio
     let startTime = Date.now();
     const fade = () => {
       const elapsed = (Date.now() - startTime) / 1000;
@@ -308,21 +298,30 @@ export default function ChatInterface() {
     requestAnimationFrame(fade);
   };
 
-  // When user clicks "Enable Audio", play the audio (if browser policy allows).
+  //===================================================================================================
+  // AUDIO CONTROL FUNCTIONS
+  //===================================================================================================
+
+  /**
+   * Enables audio playback and sets up audio crossfading
+   * Handles browser autoplay policy and error cases
+   */
   const enableAudio = () => {
     const audio1 = audioRef.current;
     const audio2 = audioRef2.current;
-    if (!audio1 || !audio2) return;
+    const typingSound = typingSoundRef.current;
+    if (!audio1 || !audio2 || !typingSound) return;
 
     audio1.muted = false;
     audio2.muted = false;
+    typingSound.muted = false;
     audio1.volume = 1;
     audio1.play().catch(err => {
       console.error('Audio play failed:', err);
     });
     setAudioEnabled(true);
 
-    // Set up the crossfade when the first audio is about to end
+    // Set up crossfade for continuous ambient sound
     audio1.addEventListener('timeupdate', () => {
       const timeLeft = audio1.duration - audio1.currentTime;
       if (timeLeft < 1 && currentAudio === 1) {
@@ -338,28 +337,183 @@ export default function ChatInterface() {
     });
   };
 
-  // When user clicks "Disable Audio", pause both audio elements
+  /**
+   * Disables all audio playback
+   * Stops ambient sound and typing effects
+   */
   const disableAudio = () => {
     const audio1 = audioRef.current;
     const audio2 = audioRef2.current;
-    if (!audio1 || !audio2) return;
+    const typingSound = typingSoundRef.current;
+    if (!audio1 || !audio2 || !typingSound) return;
 
     audio1.pause();
     audio2.pause();
+    typingSound.pause();
     setAudioEnabled(false);
   };
 
-  /** Optional: Format uptime as HH:MM:SS */
-  function formatUptime(seconds: number) {
-    const h = Math.floor(seconds / 3600).toString().padStart(2, '0');
-    const m = Math.floor((seconds % 3600) / 60).toString().padStart(2, '0');
-    const s = Math.floor(seconds % 60).toString().padStart(2, '0');
-    return `${h}:${m}:${s}`;
+  //===================================================================================================
+  // HOOKS AND EFFECTS
+  //===================================================================================================
+
+  /** Scroll to bottom whenever displayedMessages changes */
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [displayedMessages]);
+
+  /** Uptime counter */
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setUptime((prev) => prev + 1);
+    }, 1000);
+    return () => clearInterval(interval);
+  }, []);
+
+  /** Initialize the system messages (typing them out in sequence). */
+  useEffect(() => {
+    async function bootSequence() {
+      if (bootIndex >= BOOT_SEQUENCE.length) {
+        setIsBooted(true);
+        return;
+      }
+      const nextMsg = BOOT_SEQUENCE[bootIndex];
+      addNewDisplayedMessage({ ...nextMsg, displayedContent: '' });
+      await typeOutText(
+        nextMsg.content,
+        (partialText, isDone) => {
+          setDisplayedMessages((prev) => {
+            const updated = [...prev];
+            const msgIdx = updated.findIndex((m) => m.content === nextMsg.content);
+            if (msgIdx !== -1) {
+              updated[msgIdx] = {
+                ...updated[msgIdx],
+                displayedContent: partialText,
+                isComplete: isDone
+              };
+            }
+            return updated;
+          });
+        },
+        typingSoundRef.current,
+        audioEnabled,
+      );
+      setBootIndex((prev) => prev + 1);
+    }
+    bootSequence();
+  }, [bootIndex, audioEnabled]);
+
+  // Start AI interaction after boot sequence
+  useEffect(() => {
+    if (isBooted && !hasStartedAI) {
+      setHasStartedAI(true);
+      // Add initial AI messages
+      INIT_MESSAGES.forEach(msg => {
+        addNewDisplayedMessage({
+          ...msg,
+          displayedContent: msg.content,
+          isComplete: true
+        });
+      });
+    }
+  }, [isBooted, hasStartedAI]);
+
+  // Watch for new messages and update display
+  useEffect(() => {
+    if (!isBooted || messages.length === 0) return;
+
+    const lastMessage = messages[messages.length - 1];
+    if (lastMessage.role === 'assistant') {
+      // Update or add the assistant's message
+      setDisplayedMessages((prev) => {
+        const existingIdx = prev.findIndex(m => m.id === lastMessage.id);
+        if (existingIdx !== -1) {
+          // Update existing message
+          const updated = [...prev];
+          updated[existingIdx] = {
+            ...updated[existingIdx],
+            content: lastMessage.content,
+            displayedContent: lastMessage.content,
+            isComplete: !isLoading,
+            isStreaming: isLoading,
+          };
+          return updated;
+        } else {
+          // Add new message with streaming state
+          return [...prev, {
+            ...lastMessage,
+            displayedContent: lastMessage.content || '',
+            isComplete: !isLoading,
+            isStreaming: isLoading,
+          }];
+        }
+      });
+
+      // Play typing sound if streaming
+      if (isLoading && audioEnabled && typingSoundRef.current) {
+        typingSoundRef.current.currentTime = 0;
+        typingSoundRef.current.play().catch(() => {});
+      }
+    } else if (lastMessage.role === 'user') {
+      // Immediately add user messages
+      setDisplayedMessages((prev) => {
+        const existingIdx = prev.findIndex(m => m.id === lastMessage.id);
+        if (existingIdx === -1) {
+          return [...prev, {
+            ...lastMessage,
+            displayedContent: lastMessage.content,
+            isComplete: true,
+            isStreaming: false,
+          }];
+        }
+        return prev;
+      });
+    }
+  }, [messages, isBooted, audioEnabled, isLoading]);
+
+  //===================================================================================================
+  // EVENT HANDLERS
+  //===================================================================================================
+
+  /**
+   * Handles form submission for sending messages
+   * Manages special commands and error cases
+   * 
+   * @param e - Form submission event
+   */
+  async function onSubmit(e: FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    if (!isBooted) return;
+
+    const trimmed = input.trim();
+    if (!trimmed) return;
+
+    if (trimmed.toLowerCase() === 'clear') {
+      setDisplayedMessages([]);
+      handleInputChange({ target: { value: '' } } as any);
+      return;
+    }
+
+    try {
+      await handleSubmit(e);
+    } catch (error) {
+      console.error('Error submitting message:', error);
+      addNewDisplayedMessage({
+        role: 'system',
+        content: `[ERROR] Failed to send message: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        isComplete: true,
+      });
+    }
   }
+
+  //===================================================================================================
+  // RENDER
+  //===================================================================================================
 
   return (
     <div className="crt h-screen bg-[#201700] text-[#FFD700] font-mono relative overflow-hidden">
-      {/* CRT Overlays */}
+      {/* CRT Effects Layer
+          Provides visual effects like scan lines, flicker, and screen curvature */}
       <div className="absolute inset-0 pointer-events-none screen-curvature" />
       <div id="noise" className="fixed inset-0 pointer-events-none opacity-[0.1] mix-blend-overlay" />
       <div className="crt-flicker" />
@@ -367,7 +521,8 @@ export default function ChatInterface() {
       <div className="crt-scanline" />
       <div className="scanline" />
 
-      {/* Outer border styling */}
+      {/* Terminal Frame
+          Creates the outer border with corner decorations */}
       <div className="fixed inset-0 border-2 border-[#FFD700] m-4">
         <div className="absolute -top-[1px] -left-[1px] border-[#FFD700] border-t-2 border-l-2 w-32 h-20" />
         <div className="absolute -top-[1px] -right-[1px] border-[#FFD700] border-t-2 border-r-2 w-32 h-20" />
@@ -375,11 +530,12 @@ export default function ChatInterface() {
         <div className="absolute -bottom-[1px] -right-[1px] border-[#FFD700] border-b-2 border-r-2 w-32 h-20" />
       </div>
 
-      {/* Terminal top labels */}
+      {/* Terminal Header
+          Displays system information and controls */}
       <div className="fixed top-6 left-6 text-xs">
-        <div>K.E.R.O.S. (v4.9.1)</div>
-        <div>Erebus Corp. — 2147</div>
-        <div>Upsilon-7 Terminal</div>
+        <div>K.E.R.O.S. ({TERMINAL_CONFIG.VERSION})</div>
+        <div>{TERMINAL_CONFIG.CORPORATION} — {TERMINAL_CONFIG.YEAR}</div>
+        <div>{TERMINAL_CONFIG.STATION} Terminal</div>
       </div>
       <div className="fixed top-6 right-6 text-xs text-right z-50">
         <div>TERMINAL STATUS: {isBooted ? 'ACTIVE' : 'BOOTING'}</div>
@@ -393,19 +549,14 @@ export default function ChatInterface() {
         </button>
       </div>
 
-      {/* Hidden audio elements */}
-      <audio
-        ref={audioRef}
-        src={ATMOSPHERE_BUZZ_SOUND_URL}
-        muted={true}
-      />
-      <audio
-        ref={audioRef2}
-        src={ATMOSPHERE_BUZZ_SOUND_URL}
-        muted={true}
-      />
+      {/* Audio Elements
+          Hidden audio players for ambient and interaction sounds */}
+      <audio ref={audioRef} src={AUDIO_ASSETS.AMBIENT} muted={true} />
+      <audio ref={audioRef2} src={AUDIO_ASSETS.AMBIENT} muted={true} />
+      <audio ref={typingSoundRef} src={AUDIO_ASSETS.TYPING} muted={true} />
 
-      {/* Chat Container */}
+      {/* Message Display
+          Scrollable container for chat messages with gradient overlay */}
       <div className="flex-1 h-[calc(100vh-8rem)] mx-4 mt-20 mb-24 overflow-y-auto relative 
         before:content-[''] 
         before:pointer-events-none 
@@ -430,17 +581,19 @@ export default function ChatInterface() {
             return (
               <div key={i} className="space-y-1 relative">
                 <div className="text-xs opacity-50">{label}</div>
-                <div className="leading-relaxed glitch relative">
-                  {msg.displayedContent}
-                  {/* Only show blinking cursor after the last complete message */}
-                  {msg.isComplete && i === displayedMessages.length - 1 && (
-                    <span className="inline-block w-2 h-4 bg-[#FFD700] animate-blink ml-1" />
-                  )}
-                  {/* Optional phosphor glow overlay for completed text */}
-                  {msg.isComplete && (
-                    <div className="absolute inset-0 pointer-events-none phosphor-glow" />
-                  )}
-                </div>
+                <div 
+                  className="leading-relaxed glitch relative"
+                  dangerouslySetInnerHTML={{ 
+                    __html: md.render(msg.displayedContent || '') 
+                  }}
+                />
+                {/* Cursor and glow effects */}
+                {(msg.isStreaming || (msg.isComplete && i === displayedMessages.length - 1)) && (
+                  <span className="inline-block w-2 h-4 bg-[#FFD700] animate-blink ml-1" />
+                )}
+                {msg.isComplete && (
+                  <div className="absolute inset-0 pointer-events-none phosphor-glow" />
+                )}
               </div>
             );
           })}
@@ -448,7 +601,8 @@ export default function ChatInterface() {
         </div>
       </div>
 
-      {/* Input */}
+      {/* Input Form
+          Message input with submit button */}
       <form
         onSubmit={onSubmit}
         className="fixed bottom-4 inset-x-4 p-8 bg-gradient-to-t from-[#201700] to-transparent"

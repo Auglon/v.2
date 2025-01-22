@@ -1,0 +1,70 @@
+---
+description: Documentation Guidelines
+globs: *.tsx
+---
+# Instructions for Documenting Code
+
+=============================================================================================
+## Overall Structure and Purpose
+=============================================================================================
+Begin/Update each file(e.g., a component, a significant function, a utility module) with description/notes in a comment block.
+Purpose: Clearly state the component's or module's overall purpose, role in the application, and any unique characteristics.
+Example:
+
+```TypeScript
+
+/**
+ * A refined, immersi(...)
+ * This version pres(...)
+ *
+ * -------------------------------------------------------------------
+ * Note:
+ * - Adjust the init(...)
+(...)
+ *   in your Next.j(...)
+ * -------------------------------------------------------------------
+ */
+```
+
+=============================================================================================
+## Clear Segmentation:
+=============================================================================================
+Use comment lines to visually separate logical sections of your code.
+Format: //---(...)-------[SEGMENT NAME]----(...)
+Example:
+
+```TypeScript
+
+//---------------------------SOUNDS----(...)
+// ... (Sound-related constants)
+
+//-------------------------Define Message Type ---(...)
+// ... (Message type definition)
+
+```
+
+=============================================================================================
+## Function Documentation
+=============================================================================================
+Explain each function’s purpose, parameters, return value, and any related files or functions.
+Clarity: Be clear and concise.
+Consistency: Use a consistent style (use JSDoc format).
+Example:
+
+
+```TypeScript
+//---------------------------FUNCTION: Authenticate User--(...)
+/**
+ * Authenticates a user by validating credentials against the database.
+ *
+ * @param {string} username - The unique username of the individual.
+ * @param {string} password - A plain-text password that gets hashed before validation.
+ * @returns {Promise<boolean>} A promise resolving to true if authentication succeeds, or false otherwise.
+
+ * @see ./hashUtils.ts for password hashing details
+ * @see ./sessionManager.ts for session-related utilities
+ */
+
+
+export async function authenticateUser(...)
+

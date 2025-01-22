@@ -470,3 +470,36 @@ body {
   }
 }
 
+/* KaTeX Styling */
+.katex {
+  color: #FFD700 !important; /* Match terminal text color */
+  font-size: 1.1em !important;
+}
+
+.katex-display {
+  margin: 1em 0 !important;
+  overflow-x: auto;
+  overflow-y: hidden;
+}
+
+/* Style KaTeX elements to match terminal theme */
+.katex .mord,
+.katex .mbin,
+.katex .mrel,
+.katex .mopen,
+.katex .mclose,
+.katex .mpunct,
+.katex .minner {
+  color: #FFD700 !important;
+}
+
+/* Add subtle glow effect to math expressions */
+.katex-display > .katex {
+  text-shadow: 0 0 5px rgba(255, 215, 0, 0.3);
+}
+
+/* Ensure math expressions don't break the terminal aesthetic */
+.katex-html {
+  background: transparent !important;
+}
+

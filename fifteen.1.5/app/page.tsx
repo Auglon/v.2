@@ -1,11 +1,9 @@
-import Image from "next/image";
 import ChatInterface from './components/ChatInterface';
-
 
 export default function Home() {
   return (
-      <main className="bg-black">
+    <main className="min-h-screen bg-black">
       <ChatInterface />
-      </main>
+    </main>
   );
 }

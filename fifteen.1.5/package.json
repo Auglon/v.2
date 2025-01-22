@@ -9,15 +9,13 @@
     "lint": "next lint"
   },
   "dependencies": {
-    "@11labs/react": "^0.0.4",
     "@ai-sdk/google": "^1.1.0",
-    "ai": "^4.1.0",
-    "@google/generative-ai": "^0.2.1",
     "@radix-ui/react-primitive": "^2.0.1",
-    "@vercel/postgres": "^0.10.0",
-  
+    "ai": "^4.1.0",
     "framer-motion": "^12.0.0",
     "lucide-react": "^0.473.0",
+    "markdown-it": "^14.1.0",
+    "markdown-it-katex": "^2.0.3",
     "next": "15.1.5",
     "next-auth": "^4.24.11",
     "react": "19.0.0",
@@ -27,6 +25,7 @@
     "zod": "^3.24.1"
   },
   "devDependencies": {
+    "@types/markdown-it": "^14.1.2",
     "@types/node": "^22.10.7",
     "@types/react": "^19.0.7",
     "@types/react-dom": "^19.0.3",
