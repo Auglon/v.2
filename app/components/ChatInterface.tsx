@@ -6,7 +6,7 @@ import { Send } from 'lucide-react';
 import { nullable } from 'zod';
 import MarkdownIt from 'markdown-it';
 import mk from 'markdown-it-katex';
-import Map from './Map'
+
 
 /**
  * K.E.R.O.S. Terminal Interface Component
