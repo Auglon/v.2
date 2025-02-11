@@ -39,7 +39,7 @@ export const runtime = 'edge';
  * AI Model Configuration
  */
 const AI_CONFIG = {
-  MODEL: 'gemini-2.0-pro-exp',
+  MODEL: 'gemini-2.0-pro-exp-02-05',
   TEMPERATURE: 0.7,
   TOP_P: 0.4,
   MAX_TOKENS: 2000,
