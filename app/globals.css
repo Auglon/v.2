@@ -1,352 +1,347 @@
+/* ==========================================================================
+   Upsilon-7 Terminal Interface - Stylesheet v1.2 [DECAYING]
+   A.R.I. Analysis: Consolidated & Refined for Atmospheric Integrity
+   ========================================================================== */
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
+/* --- Base Configuration & Fonts --- */
 @layer base {
+  /* Define base colors - can be overridden by specific components */
   :root {
-    --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
-    --radius: 0.5rem;
+    --terminal-bg: #0a0800; /* Deep, dark near-black */
+    --terminal-fg: #FFB000; /* Primary Amber/Gold */
+    --terminal-fg-dim: #FFAA00; /* Dimmer Amber */
+    --terminal-glow: #FFD700; /* Brighter glow color */
+    --terminal-accent: #FFFF00; /* Accent yellow for links etc. */
+    --terminal-error: #FF5555; /* Error red */
+    --terminal-error-bg: #550000; /* Dark red bg for errors */
+    --terminal-user-bg: #332200; /* User message background */
+    --terminal-ari-bg: #1a1400; /* ARI message background */
   }
 
-  .dark {
-    --background: 222.2 84% 4.9%;
-    --foreground: 0 0% 100%;
+  /* Apply base styles to body - ensures full-page background */
+  body {
+    @apply bg-[var(--terminal-bg)] text-[var(--terminal-fg)];
+    /* ! Use a proper monospace font for the terminal ! */
+    font-family: 'IBM Plex Mono', 'Courier New', Courier, monospace;
+    overflow: hidden; /* Prevent scrollbars on the body */
+    height: 100vh;
+    margin: 0;
+    padding: 0;
   }
 }
 
-@layer components {
-  .above-overlay {
-    pointer-events: auto;
-    position: relative;
-    z-index: 40;
-  }
+/* --- Main Terminal Container & CRT Effect --- */
+.crt-effect {
+  @apply fixed inset-0 overflow-hidden; /* Container for all effects */
+  background-color: var(--terminal-bg);
+  /* Base CRT look: slight saturation, contrast boost */
+  filter: brightness(1.1) contrast(1.1) saturate(1.2);
+  /* Base screen flicker - subtle */
+  animation: screen-flicker 0.15s infinite alternate;
 }
 
-body {
-  @apply bg-background text-foreground;
-  font-family: Arial, Helvetica, sans-serif;
-  overflow: hidden;
-  height: 100vh;
-  margin: 0;
-  padding: 0;
+/* --- Overlay Effects (Applied to child divs within .crt-effect) --- */
+
+/* Scanlines */
+.scanline-overlay {
+  @apply absolute inset-0 pointer-events-none z-[5];
+  background: linear-gradient(
+    to bottom,
+    transparent 50%,
+    rgba(0, 0, 0, 0.3) 50% /* Darker, more visible lines */
+  );
+  background-size: 100% 3px; /* Slightly thicker lines */
+  opacity: 0.15; /* Subtle but present */
+  animation: scanline-move 20s linear infinite; /* Slower, smoother movement */
 }
 
-@keyframes noise {
-  0%, 100% { transform: translate(0, 0); }
-  10% { transform: translate(-1%, -1%); }
-  20% { transform: translate(1%, 1%); }
-  30% { transform: translate(-2%, -2%); }
-  40% { transform: translate(2%, 2%); }
-  50% { transform: translate(-1%, 1%); }
-  60% { transform: translate(1%, -1%); }
-  70% { transform: translate(2%, -2%); }
-  80% { transform: translate(-2%, 2%); }
-  90% { transform: translate(1%, -2%); }
-}
-
-.bg-noise {
-  background-image: url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADIAAAAyBAMAAADsEZWCAAAAGFBMVEUAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAANxg4mAAAACHRSTlMAERITFBUWFxgbI2QAAAAJcEhZcwAADsQAAA7EAZUrDhsAAAA0SURBVDjLY2AYBaNg+AJGJiChJMbAwMwA4jGxMDBwMUCBEgOYy8ZEgQYYR/UMgpQfBYMNAABn6hJpPWmY/AAAAABJRU5ErkJggg==");
+/* Static / Noise */
+.static-overlay {
+  @apply absolute inset-0 pointer-events-none z-[6];
+  /* Ensure you have this image or use a Base64 alternative */
+  background-image: url('/images/static-noise.png');
   background-repeat: repeat;
-  animation: noise 0.2s infinite;
+  opacity: 0.04; /* Start very subtle */
+  /* Flicker animation will be modulated by glitch intensity */
+  animation: static-flicker 0.1s steps(2) infinite;
 }
 
-.bg-scanline {
-  background: repeating-linear-gradient(
-    0deg,
-    rgba(255, 215, 0, 0.05),
-    rgba(255, 215, 0, 0.05) 1px,
-    transparent 1px,
-    transparent 2px
-  );
+/* Vignette - Darkens edges */
+.vignette-overlay {
+  @apply absolute inset-0 pointer-events-none z-[4];
+  /* More pronounced vignette */
+  box-shadow: inset 0 0 15vw 5vw rgba(0, 0, 0, 0.75);
 }
 
-.bg-vignette {
-  background: radial-gradient(
-    circle at center,
-    transparent 10%,
-    rgba(0, 0, 0, 0.2) 50%,
-    rgba(0, 0, 0, 0.5) 100%
-  );
+/* Optional: Screen Curvature (Apply to content area if desired, not overlay) */
+.screen-curve-effect {
+   border-radius: 50% / 10%; /* Elliptical curve */
+   transform: perspective(70em) rotateX(1.5deg) scaleY(1.01); /* Subtle 3D perspective */
+   overflow: hidden; /* Clip content to the curve */
+   box-shadow: inset 0 0 30px rgba(0,0,0,0.3); /* Inner shadow enhances curve */
 }
 
-.above-overlay {
-  pointer-events: auto;
-  position: relative;
-  z-index: 40;
+/* Optional: Cracked Screen */
+.cracked-screen-overlay {
+   @apply absolute inset-0 pointer-events-none z-[7];
+   /* Ensure you have this image */
+   background-image: url('/images/cracked-screen.png');
+   background-size: cover;
+   background-position: center;
+   opacity: 0.1; /* Keep it subtle */
+   mix-blend-mode: overlay; /* Blend with underlying layers */
 }
 
-.screen-curve {
-  background: radial-gradient(
-    circle at center,
-    transparent,
-    rgba(0, 0, 0, 0.2) 100%
-  );
-  border-radius: 50% / 10%;
-  transform: perspective(50em) rotateX(2deg);
+/* --- Text Glow & Effects --- */
+
+/* Base Phosphor Text Glow */
+.text-glow {
+  text-shadow:
+    0 0 1px rgba(255, 176, 0, 0.5), /* Inner halo */
+    0 0 3px var(--terminal-glow),  /* Main glow */
+    0 0 6px rgba(255, 215, 0, 0.4); /* Outer haze */
 }
 
-.screen-glow {
-  box-shadow: 
-    inset 0 0 50px rgba(255, 215, 0, 0.1),
-    0 0 20px rgba(255, 215, 0, 0.1);
+/* Animated glow for streaming / active elements */
+.text-glow-streaming {
+  animation: text-glow-pulse 1.5s infinite ease-in-out;
 }
 
-/* Enhanced phosphor glow effect */
-.phosphor-glow {
-  text-shadow: 
-    0 0 2px rgba(255, 215, 0, 0.8),
-    0 0 4px rgba(255, 215, 0, 0.6),
-    0 0 6px rgba(255, 215, 0, 0.4),
-    0 0 8px rgba(255, 215, 0, 0.2);
-  animation: phosphorFade 2s ease-out infinite;
+/* Use box-shadow for glowing message boxes */
+.box-glow-streaming {
+   box-shadow: 0 0 8px 2px rgba(255, 176, 0, 0.5);
+   animation: box-glow-pulse 1.5s infinite ease-in-out;
+}
+.box-glow-persistent {
+  border-radius: inherit;
+   /* Slightly stronger persistent glow */
+  box-shadow: 0 0 10px 3px var(--terminal-glow), 0 0 15px 5px rgba(255, 176, 0, 0.4);
+  animation: box-glow-subtle-pulse 3s infinite ease-in-out;
 }
 
-@keyframes phosphorFade {
-  0% { opacity: 1; }
-  50% { opacity: 0.8; }
-  100% { opacity: 1; }
+
+/* --- Glitch Intensity Effects (Applied to .crt-effect container) --- */
+/* These modify the base CRT effects and overlay animations/opacity */
+
+/* Intensity 1: Barely noticeable */
+.glitch-intensity-1 .static-overlay { opacity: 0.06; animation-duration: 0.12s; }
+.glitch-intensity-1 { animation: screen-flicker 0.14s infinite alternate; } /* Slightly slower flicker */
+
+/* Intensity 2: Mild disruption */
+.glitch-intensity-2 .static-overlay { opacity: 0.08; animation-duration: 0.09s; }
+.glitch-intensity-2 { animation: screen-flicker 0.12s infinite alternate, text-jitter-mild 0.4s infinite alternate; }
+
+/* Intensity 3: Moderate glitching, slight color shift */
+.glitch-intensity-3 .static-overlay { opacity: 0.12; animation-duration: 0.07s; }
+.glitch-intensity-3 {
+  animation: screen-flicker 0.1s infinite alternate, text-jitter-moderate 0.25s infinite alternate;
+  filter: brightness(1.15) contrast(1.15) saturate(1.3) hue-rotate(3deg);
 }
 
-@keyframes flicker {
-  0% { opacity: 0.98; }
-  5% { opacity: 0.95; }
-  10% { opacity: 0.9; }
-  15% { opacity: 0.85; }
-  20% { opacity: 0.95; }
-  25% { opacity: 0.94; }
-  30% { opacity: 0.98; }
-  35% { opacity: 0.93; }
-  40% { opacity: 0.99; }
-  45% { opacity: 0.97; }
-  50% { opacity: 0.94; }
-  55% { opacity: 0.96; }
-  60% { opacity: 0.98; }
-  65% { opacity: 0.95; }
-  70% { opacity: 0.97; }
-  75% { opacity: 0.93; }
-  80% { opacity: 0.96; }
-  85% { opacity: 0.98; }
-  90% { opacity: 0.95; }
-  95% { opacity: 0.96; }
-  100% { opacity: 0.99; }
+/* Intensity 4: Significant disruption, color aberration */
+.glitch-intensity-4 .static-overlay { opacity: 0.18; animation-duration: 0.05s; }
+.glitch-intensity-4 {
+  animation: screen-flicker 0.08s infinite alternate, text-jitter-severe 0.18s infinite alternate, color-aberration 0.6s infinite alternate;
+  filter: brightness(1.2) contrast(1.2) saturate(1.4) hue-rotate(-4deg);
 }
 
-@keyframes scanline {
-  0% {
-    transform: translateY(0px);
-  }
-  100% {
-    transform: translateY(100vh);
-  }
+/* Intensity 5: Critical failure imminent - screen jumps, heavy aberration */
+.glitch-intensity-5 .static-overlay { opacity: 0.25; animation-duration: 0.04s; }
+.glitch-intensity-5 {
+  animation: screen-flicker 0.06s infinite alternate, text-jitter-severe 0.12s infinite alternate, color-aberration 0.4s infinite alternate, screen-jump 0.5s infinite alternate;
+  filter: brightness(1.25) contrast(1.25) saturate(1.5) hue-rotate(6deg);
 }
 
-@keyframes blink {
-  0% { opacity: 1; }
-  50% { opacity: 0; }
-  100% { opacity: 1; }
+
+/* --- Keyframe Animations --- */
+
+/* Base Screen Flicker */
+@keyframes screen-flicker {
+  from { opacity: 1; }
+  to { opacity: 0.96; } /* Very subtle base flicker */
 }
 
-@keyframes noise {
-  0%, 100% { background-position: 0 0; }
-  10% { background-position: -5% -10%; }
-  20% { background-position: -15% 5%; }
-  30% { background-position: 7% -25%; }
-  40% { background-position: 20% 25%; }
-  50% { background-position: -25% 10%; }
-  60% { background-position: 15% 5%; }
-  70% { background-position: 0% 15%; }
-  80% { background-position: 25% 35%; }
-  90% { background-position: -10% 10%; }
+/* Scanline Movement */
+@keyframes scanline-move {
+  from { background-position-y: 0; }
+  to { background-position-y: 3px; } /* Match background-size height */
 }
 
-.terminal {
-  background-color: #0d0d0d;
-  background-image: linear-gradient(0deg, rgba(0, 150, 0, 0.1) 50%, rgba(0, 0, 0, 0.2) 50%),
-    radial-gradient(rgba(0, 150, 0, 0.75), black 120%);
-  background-size: 100% 3px, 100% 100%;
-  color: #ffb000;
-  font-family: "IBM Plex Mono", monospace;
-  overflow: hidden;
+/* Static/Noise Flicker (steps for abruptness) */
+@keyframes static-flicker {
+   0% { transform: translate(1px, -1px); opacity: 1; } /* Use base opacity set by intensity class */
+   25% { transform: translate(-1px, 1px); opacity: 0.7; }
+   50% { transform: translate(1px, 1px); opacity: 0.9; }
+   75% { transform: translate(-1px, -1px); opacity: 0.6; }
+   100% { transform: translate(1px, -1px); opacity: 1; }
 }
 
-.terminal::before {
-  content: "";
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: repeating-linear-gradient(
-    0deg,
-    rgba(0, 0, 0, 0.15),
-    rgba(0, 0, 0, 0.15) 1px,
-    transparent 1px,
-    transparent 2px
-  );
-  pointer-events: none;
+/* Text Glow Pulse */
+@keyframes text-glow-pulse {
+  0%, 100% { text-shadow: 0 0 1px rgba(255,176,0,0.5), 0 0 3px var(--terminal-glow), 0 0 6px rgba(255,215,0,0.4); opacity: 1; }
+  50% { text-shadow: 0 0 2px rgba(255,176,0,0.7), 0 0 5px var(--terminal-glow), 0 0 10px rgba(255,215,0,0.6); opacity: 0.8; }
+}
+/* Box Glow Pulse */
+@keyframes box-glow-pulse {
+  0%, 100% { box-shadow: 0 0 8px 2px rgba(255, 176, 0, 0.5); }
+  50% { box-shadow: 0 0 12px 4px rgba(255, 176, 0, 0.7); }
+}
+@keyframes box-glow-subtle-pulse {
+  0%, 100% { box-shadow: 0 0 10px 3px var(--terminal-glow), 0 0 15px 5px rgba(255, 176, 0, 0.4); opacity: 1; }
+  50% { box-shadow: 0 0 8px 2px var(--terminal-glow), 0 0 12px 4px rgba(255, 176, 0, 0.3); opacity: 0.9; }
 }
 
-.terminal::after {
-  content: "";
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 3px;
-  background: rgba(255, 255, 255, 0.1);
-  animation: scanline 6s linear infinite;
-  pointer-events: none;
+/* Standard Pulse (for boot bar, etc.) */
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
 }
 
-.noise {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background-image: url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADIAAAAyBAMAAADsEZWCAAAAGFBMVEUAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAMABA+AAAACHRSTlMzMzMzMzMzM85JBgUAAAAJcEhZcwAADsQAAA7EAZUrDhsAAAAwSURBVDjLY2AYBaNg8ANTC4Q0MCg0gEkJoNgBQ2oAhDQwKDQAkyAFuNQOglE0CgYYAACaWQ+d7nO2/QAAAABJRU5ErkJggg==");
-  background-repeat: repeat;
-  opacity: 0.05;
-  animation: noise 0.5s steps(2) infinite;
-  pointer-events: none;
+/* Loading Spinner */
+@keyframes spin-slow {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+/* Apply with: animation: spin-slow 2s linear infinite; */
+
+/* Text Jitter Effects (Applied by glitch intensity classes) */
+@keyframes text-jitter-mild {
+  25% { transform: translate(0.5px, -0.5px); }
+  75% { transform: translate(-0.5px, 0.5px); }
+}
+@keyframes text-jitter-moderate {
+  25% { transform: translate(0.8px, -0.4px); }
+  50% { transform: translate(-0.4px, 0.8px); }
+  75% { transform: translate(0.4px, -0.8px); }
+}
+@keyframes text-jitter-severe {
+  20% { transform: translate(1.2px, -0.8px); }
+  40% { transform: translate(-0.8px, 1.2px); }
+  60% { transform: translate(0.8px, 0.8px); }
+  80% { transform: translate(-1.2px, -0.4px); }
 }
 
-.glitch {
-  position: relative;
-  animation: glitch-skew 1s infinite linear alternate-reverse;
+/* Color Aberration (RGB Shift) */
+@keyframes color-aberration {
+  0%, 100% { text-shadow: 0.5px 0 0 rgba(255,0,0,0.4), -0.5px 0 0 rgba(0,255,255,0.4); }
+  50% { text-shadow: -0.5px 0 0 rgba(255,0,0,0.4), 0.5px 0 0 rgba(0,255,255,0.4); }
+  /* Note: This only works well on text itself. Applying globally via filter is complex. */
+  /* Glitch intensity filter includes hue-rotate for a simpler global color shift */
 }
 
-.glitch::before,
-.glitch::after {
-  content: attr(data-text);
-  position: absolute;
-  width: 100%;
-  height: 100%;
-  top: 0;
+/* Screen Jump */
+@keyframes screen-jump {
+  10%, 30%, 50%, 70%, 90% { transform: translate(0, 0); }
+  20% { transform: translate(1px, -2px); }
+  40% { transform: translate(-1px, 1px); }
+  60% { transform: translate(2px, 1px); }
+  80% { transform: translate(-1px, -1px); }
 }
 
-.glitch::before {
-  left: 2px;
-  text-shadow: -2px 0 #ff0000;
-  clip: rect(44px, 450px, 56px, 0);
-  animation: glitch-anim 5s infinite linear alternate-reverse;
+/* Message Flicker-In */
+@keyframes message-flicker-in {
+  0% { opacity: 0; filter: brightness(2); }
+  25% { opacity: 0.8; filter: brightness(1.2); }
+  100% { opacity: 1; filter: brightness(1); }
+}
+/* Apply with: animation: message-flicker-in 0.3s ease-out; */
+
+/* Input Border Flicker (Idle State) */
+@keyframes input-border-flicker-anim {
+   0%, 100% { opacity: 0.3; box-shadow: 0 0 2px 0px rgba(255, 215, 0, 0.3); }
+   50% { opacity: 0.5; box-shadow: 0 0 3px 1px rgba(255, 215, 0, 0.4); }
+   10%, 70% { opacity: 0.6; }
+   30%, 90% { opacity: 0.2; }
+}
+/* Apply with: animation: input-border-flicker-anim 2s infinite linear; */
+
+
+/* --- Component Specific Styles --- */
+
+/* Style for message boxes (adjust colors based on role in JSX) */
+.message-box {
+   @apply relative px-4 py-2 rounded max-w-[85%] whitespace-pre-wrap;
+   /* Base style, override bg/text color per role */
+   background-color: var(--terminal-ari-bg);
+   color: var(--terminal-fg);
+   /* Add subtle inner shadow for depth */
+   box-shadow: inset 0 0 5px rgba(0,0,0,0.3);
+}
+.message-box-user {
+   background-color: var(--terminal-user-bg);
+   color: var(--terminal-glow); /* Slightly brighter text for user */
+}
+.message-box-error {
+   background-color: var(--terminal-error-bg);
+   color: var(--terminal-error);
+   border: 1px solid var(--terminal-error);
 }
 
-.glitch::after {
-  left: -2px;
-  text-shadow: -2px 0 #00ff00;
-  clip: rect(44px, 450px, 56px, 0);
-  animation: glitch-anim2 5s infinite linear alternate-reverse;
+/* Corner details for message boxes (add via JSX) */
+.corner-detail {
+   @apply absolute w-2 h-2 border-[var(--terminal-fg)] opacity-50;
+}
+/* Example positions (use Tailwind classes in JSX): */
+/* .corner-top-left { top: -1px; left: -1px; border-left-width: 1px; border-top-width: 1px; } */
+
+/* Input field styling */
+.terminal-input {
+   @apply w-full bg-transparent px-4 py-2 focus:outline-none text-[var(--terminal-glow)] placeholder-[var(--terminal-fg-dim)] placeholder-opacity-40 disabled:opacity-40 disabled:cursor-not-allowed;
+}
+.input-container-border {
+   @apply absolute inset-[-1px] pointer-events-none border border-[var(--terminal-glow)];
 }
 
-@keyframes glitch-anim {
-  0% { clip: rect(8px, 9999px, 72px, 0); transform: skew(0.56deg); }
-  5% { clip: rect(86px, 9999px, 98px, 0); transform: skew(0.93deg); }
-  10% { clip: rect(74px, 9999px, 95px, 0); transform: skew(0.03deg); }
-  15% { clip: rect(27px, 9999px, 44px, 0); transform: skew(0.09deg); }
-  20% { clip: rect(83px, 9999px, 74px, 0); transform: skew(0.67deg); }
-  25% { clip: rect(92px, 9999px, 67px, 0); transform: skew(0.82deg); }
-  30% { clip: rect(62px, 9999px, 72px, 0); transform: skew(0.44deg); }
-  35% { clip: rect(27px, 9999px, 64px, 0); transform: skew(0.86deg); }
-  40% { clip: rect(25px, 9999px, 33px, 0); transform: skew(0.33deg); }
-  45% { clip: rect(44px, 9999px, 89px, 0); transform: skew(0.12deg); }
-  50% { clip: rect(89px, 9999px, 99px, 0); transform: skew(0.78deg); }
-  55% { clip: rect(19px, 9999px, 96px, 0); transform: skew(0.53deg); }
-  60% { clip: rect(94px, 9999px, 44px, 0); transform: skew(0.22deg); }
-  65% { clip: rect(62px, 9999px, 11px, 0); transform: skew(0.69deg); }
-  70% { clip: rect(98px, 9999px, 44px, 0); transform: skew(0.4deg); }
-  75% { clip: rect(35px, 9999px, 23px, 0); transform: skew(0.86deg); }
-  80% { clip: rect(67px, 9999px, 98px, 0); transform: skew(0.94deg); }
-  85% { clip: rect(73px, 9999px, 42px, 0); transform: skew(0.13deg); }
-  90% { clip: rect(67px, 9999px, 78px, 0); transform: skew(0.14deg); }
-  95% { clip: rect(40px, 9999px, 93px, 0); transform: skew(0.34deg); }
-  100% { clip: rect(80px, 9999px, 19px, 0); transform: skew(0.67deg); }
+/* Submit button */
+.terminal-button {
+    @apply border border-[var(--terminal-glow)] p-2 transition-colors duration-200 disabled:opacity-30 disabled:cursor-not-allowed;
+}
+.terminal-button:not(:disabled):hover {
+    @apply bg-[var(--terminal-glow)] text-[var(--terminal-bg)];
 }
 
-.power-off {
-  animation: power-off 0.4s ease-out forwards;
+/* Markdown Specific Styles (Ensure ReactMarkdown component uses these) */
+.markdown-content {
+  p { @apply mb-2 last:mb-0; }
+  a { @apply text-[var(--terminal-accent)] underline hover:text-[var(--terminal-glow)]; }
+  code:not(pre > code) { @apply bg-black/50 px-1 py-0.5 rounded text-sm text-[var(--terminal-fg-dim)]; }
+  pre { @apply bg-black/70 p-3 rounded my-2 overflow-x-auto scrollbar-thin scrollbar-thumb-gray-700 scrollbar-track-transparent; }
+  /* Add styles for ul, ol, li, blockquote etc. matching the theme */
+  ul, ol { @apply list-inside list-disc pl-4 mb-2; }
+  blockquote { @apply border-l-2 border-[var(--terminal-fg-dim)] pl-3 italic text-[var(--terminal-fg-dim)] mb-2; }
 }
 
-@keyframes power-off {
-  0% {
-    transform: scale(1);
-    opacity: 1;
-  }
-  60% {
-    transform: scale(1.0, 0.001);
-    opacity: 0.8;
-  }
-  100% {
-    transform: scale(0, 0.001);
-    opacity: 0;
-  }
-}
 
-.warning-pulse {
-  animation: warning-pulse 2s infinite;
-}
-
-.map-container {
-  position: relative;
-  width: 100%;
-  height: 100%;
-  padding: 1rem;
-}
-
+/* --- Utilities --- */
 @layer utilities {
+  /* Scrollbar Hiding */
   .scrollbar-none {
     -ms-overflow-style: none;  /* IE and Edge */
     scrollbar-width: none;     /* Firefox */
   }
-  
   .scrollbar-none::-webkit-scrollbar {
     display: none;             /* Chrome, Safari and Opera */
   }
-}
 
-/* Ensure all overlay effects don't interfere with interactions */
-.crt::before,
-.crt::after,
-.screen-curvature,
-.bg-scanline,
-.bg-vignette,
-.screen-curve,
-.screen-glow,
-.crt-flicker,
-.crt-slow-flicker,
-.crt-scanline,
-.scanline,
-#noise,
-[class*="pointer-events-none"] {
-  pointer-events: none !important;
-  z-index: 1;
-}
-
-/* Interactive elements should be above overlays */
-.interactive-container {
-  position: relative;
-  z-index: 20;
-}
-
-/* Status panel and controls */
-.status-panel {
-  position: relative;
-  z-index: 30;
-}
-
-/* Form controls need highest z-index */
-.control-layer {
-  position: relative;
-  z-index: 40;
-}
-
-/* Ensure proper stacking for fixed elements */
-.fixed {
-  z-index: 2;
-}
-
-.fixed.interactive {
-  z-index: 30;
+  /* Thin scrollbar alternative */
+   .scrollbar-thin {
+      scrollbar-width: thin;
+      scrollbar-color: var(--terminal-fg-dim) transparent; /* thumb track */
+   }
+   .scrollbar-thin::-webkit-scrollbar {
+      width: 6px;
+   }
+   .scrollbar-thin::-webkit-scrollbar-track {
+      background: transparent;
+   }
+   .scrollbar-thin::-webkit-scrollbar-thumb {
+      background-color: var(--terminal-fg-dim);
+      border-radius: 3px;
+      border: 1px solid transparent; /* Optional border */
+   }
 }
 
