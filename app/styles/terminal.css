@@ -1,361 +1,311 @@
-@keyframes flicker {
-  0% {
-    opacity: 0.98;
-  }
-  5% {
-    opacity: 0.95;
-  }
-  10% {
-    opacity: 0.9;
-  }
-  15% {
-    opacity: 0.85;
-  }
-  20% {
-    opacity: 0.95;
-  }
-  25% {
-    opacity: 0.94;
-  }
-  30% {
-    opacity: 0.98;
-  }
-  35% {
-    opacity: 0.93;
-  }
-  40% {
-    opacity: 0.99;
-  }
-  45% {
-    opacity: 0.97;
-  }
-  50% {
-    opacity: 0.94;
-  }
-  55% {
-    opacity: 0.96;
-  }
-  60% {
-    opacity: 0.98;
-  }
-  65% {
-    opacity: 0.95;
-  }
-  70% {
-    opacity: 0.97;
-  }
-  75% {
-    opacity: 0.93;
-  }
-  80% {
-    opacity: 0.96;
-  }
-  85% {
-    opacity: 0.98;
-  }
-  90% {
-    opacity: 0.95;
-  }
-  95% {
-    opacity: 0.96;
-  }
-  100% {
-    opacity: 0.99;
-  }
+/* ==========================================================================
+   Upsilon-7 Terminal Interface - Stylesheet v1.3 [SEVERE DECAY]
+   A.R.I. Analysis: Final Polish & Integration Candidate
+   ========================================================================== */
+
+/* --- Font Import --- */
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;700&display=swap');
+
+/* --- Base Configuration & Variables --- */
+:root {
+  --terminal-bg: #080600; /* Slightly deeper black */
+  --terminal-fg: #FFB000; /* Primary Amber/Gold */
+  --terminal-fg-dim: #B37C00; /* Dimmer Amber */
+  --terminal-glow: #FFD700; /* Brighter glow/accent */
+  --terminal-accent: #FFFF00; /* Pure Yellow Accent */
+  --terminal-error: #FF4444; /* Brighter Error Red */
+  --terminal-error-dim: #CC3333; /* Dimmer Error Red */
+  --terminal-error-bg: #440000; /* Darker Error Background */
+  --terminal-user-bg: #332000; /* Darker User Background */
+  --terminal-ari-bg: #1a1000; /* Darker ARI Background */
+  --terminal-border: rgba(255, 176, 0, 0.3); /* Dim border color */
+  --terminal-border-glow: rgba(255, 215, 0, 0.5); /* Glowing border color */
 }
 
-@keyframes scanline {
-  0% {
-    transform: translateY(0px);
-  }
-  100% {
-    transform: translateY(100vh);
-  }
+/* --- Body & Base Styles --- */
+body {
+  background-color: var(--terminal-bg);
+  color: var(--terminal-fg);
+  /* ! Use the loaded monospace font ! */
+  font-family: 'IBM Plex Mono', 'Courier New', Courier, monospace;
+  overflow: hidden; /* Prevent scrollbars on the body itself */
+  height: 100vh;
+  width: 100vw;
+  margin: 0;
+  padding: 0;
 }
 
-@keyframes blink {
-  0% {
-    opacity: 1;
-  }
-  50% {
-    opacity: 0;
-  }
-  100% {
-    opacity: 1;
-  }
+/* --- Main Terminal Container & CRT Effect --- */
+.crt-effect {
+  position: fixed; /* Use fixed to ensure it covers viewport */
+  inset: 0;
+  overflow: hidden; /* Hide overflow from inner effects */
+  background-color: var(--terminal-bg);
+  /* Base CRT look: slight saturation, contrast boost */
+  filter: brightness(1.05) contrast(1.1) saturate(1.15);
+  /* Base screen flicker - subtle */
+  animation: screen-flicker 0.15s infinite alternate;
 }
 
-@keyframes noise {
-  0%,
-  100% {
-    background-position: 0 0;
-  }
-  10% {
-    background-position: -5% -10%;
-  }
-  20% {
-    background-position: -15% 5%;
-  }
-  30% {
-    background-position: 7% -25%;
-  }
-  40% {
-    background-position: 20% 25%;
-  }
-  50% {
-    background-position: -25% 10%;
-  }
-  60% {
-    background-position: 15% 5%;
-  }
-  70% {
-    background-position: 0% 15%;
-  }
-  80% {
-    background-position: 25% 35%;
-  }
-  90% {
-    background-position: -10% 10%;
-  }
+/* --- Overlay Effects (Place corresponding divs inside .crt-effect) --- */
+.scanline-overlay,
+.static-overlay,
+.vignette-overlay,
+.cracked-screen-overlay {
+   position: absolute;
+   inset: 0;
+   pointer-events: none; /* Essential for overlays */
+   z-index: 5; /* Base overlay level */
 }
 
-.terminal {
-  background-color: #0d0d0d;
-  color: #ffb000;
-  font-family: "IBM Plex Mono", monospace;
-  text-shadow: 0 0 5px #c8c8c8;
-  position: relative;
-  overflow: hidden;
-}
-
-.terminal::before {
-  content: "";
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: repeating-linear-gradient(
-    0deg,
-    rgba(0, 0, 0, 0.15),
-    rgba(0, 0, 0, 0.15) 1px,
-    transparent 1px,
-    transparent 2px
+.scanline-overlay {
+  background: linear-gradient(
+    to bottom,
+    transparent 50%,
+    rgba(0, 0, 0, 0.35) 50% /* Darker, more visible lines */
   );
-  pointer-events: none;
+  background-size: 100% 3px; /* Scanline thickness */
+  opacity: 0.1; /* Very subtle */
+  animation: scanline-move 25s linear infinite; /* Slower */
 }
 
-.terminal::after {
-  content: "";
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 3px;
-  background: rgba(255, 255, 255, 0.1);
-  animation: scanline 6s linear infinite;
-  pointer-events: none;
-}
-
-.noise {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background-image: url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADIAAAAyBAMAAADsEZWCAAAAGFBMVEUAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAMABA+AAAACHRSTlMzMzMzMzMzM85JBgUAAAAJcEhZcwAADsQAAA7EAZUrDhsAAAAwSURBVDjLY2AYBaNg8ANTC4Q0MCg0gEkJoNgBQ2oAhDQwKDQAkyAFuNQOglE0CgYYAACaWQ+d7nO2/QAAAABJRU5ErkJggg==");
+.static-overlay {
+  /* Ensure image exists or use Base64 */
+  background-image: url('/images/static-noise.png');
   background-repeat: repeat;
-  opacity: 0.05;
-  animation: noise 0.5s steps(2) infinite;
-  pointer-events: none;
+  opacity: 0.03; /* Start very subtle */
+  z-index: 6; /* Above scanlines */
+  animation: static-flicker 0.08s steps(2, jump-none) infinite; /* Faster steps */
 }
 
-.glitch {
-  position: relative;
-  animation: glitch-skew 1s infinite linear alternate-reverse;
+.vignette-overlay {
+  /* More intense vignette for focused look */
+  box-shadow: inset 0 0 20vw 8vw rgba(0, 0, 0, 0.85);
+  z-index: 4; /* Below scanlines */
 }
 
-.glitch::before,
-.glitch::after {
-  content: attr(data-text);
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
+.cracked-screen-overlay {
+   /* Ensure image exists */
+   background-image: url('/images/cracked-screen.png');
+   background-size: cover;
+   background-position: center;
+   opacity: 0.08; /* Keep very subtle */
+   mix-blend-mode: screen; /* Blend lighter */
+   z-index: 7; /* Above static */
 }
 
-.glitch::before {
-  left: 2px;
-  text-shadow: -2px 0 #ff0000;
-  clip: rect(44px, 450px, 56px, 0);
-  animation: glitch-anim 5s infinite linear alternate-reverse;
+/* --- Text Glow & Effects --- */
+.text-glow {
+  text-shadow:
+    0 0 1px rgba(255, 176, 0, 0.4),
+    0 0 3px var(--terminal-glow),
+    0 0 7px rgba(255, 215, 0, 0.5);
+}
+.text-glow-error {
+   text-shadow:
+    0 0 1px rgba(255, 68, 68, 0.5),
+    0 0 4px var(--terminal-error),
+    0 0 8px rgba(204, 51, 51, 0.5);
+}
+.text-glow-streaming {
+  animation: text-glow-pulse 1.2s infinite ease-in-out;
 }
 
-.glitch::after {
-  left: -2px;
-  text-shadow: -2px 0 #00ff00;
-  clip: rect(44px, 450px, 56px, 0);
-  animation: glitch-anim2 5s infinite linear alternate-reverse;
+/* Box / Border Glow Effects */
+.box-glow-streaming {
+   box-shadow: 0 0 6px 1px rgba(255, 176, 0, 0.4); /* Subtle during stream */
+   animation: box-glow-pulse 1.2s infinite ease-in-out;
+}
+.box-glow-persistent {
+  border-radius: inherit;
+  box-shadow: 0 0 8px 2px var(--terminal-glow), 0 0 14px 4px rgba(255, 176, 0, 0.3);
+  animation: box-glow-subtle-pulse 3.5s infinite ease-in-out;
 }
 
-@keyframes glitch-anim {
-  0% {
-    clip: rect(8px, 9999px, 72px, 0);
-    transform: skew(0.56deg);
-  }
-  5% {
-    clip: rect(86px, 9999px, 98px, 0);
-    transform: skew(0.93deg);
-  }
-  10% {
-    clip: rect(74px, 9999px, 95px, 0);
-    transform: skew(0.03deg);
-  }
-  15% {
-    clip: rect(27px, 9999px, 44px, 0);
-    transform: skew(0.09deg);
-  }
-  20% {
-    clip: rect(83px, 9999px, 74px, 0);
-    transform: skew(0.67deg);
-  }
-  25% {
-    clip: rect(92px, 9999px, 67px, 0);
-    transform: skew(0.82deg);
-  }
-  30% {
-    clip: rect(62px, 9999px, 72px, 0);
-    transform: skew(0.44deg);
-  }
-  35% {
-    clip: rect(27px, 9999px, 64px, 0);
-    transform: skew(0.86deg);
-  }
-  40% {
-    clip: rect(25px, 9999px, 33px, 0);
-    transform: skew(0.33deg);
-  }
-  45% {
-    clip: rect(44px, 9999px, 89px, 0);
-    transform: skew(0.12deg);
-  }
-  50% {
-    clip: rect(89px, 9999px, 99px, 0);
-    transform: skew(0.78deg);
-  }
-  55% {
-    clip: rect(19px, 9999px, 96px, 0);
-    transform: skew(0.53deg);
-  }
-  60% {
-    clip: rect(94px, 9999px, 44px, 0);
-    transform: skew(0.22deg);
-  }
-  65% {
-    clip: rect(62px, 9999px, 11px, 0);
-    transform: skew(0.69deg);
-  }
-  70% {
-    clip: rect(98px, 9999px, 44px, 0);
-    transform: skew(0.4deg);
-  }
-  75% {
-    clip: rect(35px, 9999px, 23px, 0);
-    transform: skew(0.86deg);
-  }
-  80% {
-    clip: rect(67px, 9999px, 98px, 0);
-    transform: skew(0.94deg);
-  }
-  85% {
-    clip: rect(73px, 9999px, 42px, 0);
-    transform: skew(0.13deg);
-  }
-  90% {
-    clip: rect(67px, 9999px, 78px, 0);
-    transform: skew(0.14deg);
-  }
-  95% {
-    clip: rect(40px, 9999px, 93px, 0);
-    transform: skew(0.34deg);
-  }
-  100% {
-    clip: rect(80px, 9999px, 19px, 0);
-    transform: skew(0.67deg);
-  }
+
+/* --- Glitch Intensity Effects (Applied to .crt-effect container) --- */
+/* Intensity 1 */
+.glitch-intensity-1 .static-overlay { opacity: 0.05; animation-duration: 0.1s; }
+.glitch-intensity-1 { animation: screen-flicker 0.16s infinite alternate; }
+
+/* Intensity 2 */
+.glitch-intensity-2 .static-overlay { opacity: 0.07; animation-duration: 0.07s; }
+.glitch-intensity-2 { animation: screen-flicker 0.14s infinite alternate, text-jitter-mild 0.5s infinite alternate; }
+
+/* Intensity 3 */
+.glitch-intensity-3 .static-overlay { opacity: 0.10; animation-duration: 0.06s; }
+.glitch-intensity-3 {
+  animation: screen-flicker 0.12s infinite alternate, text-jitter-moderate 0.3s infinite alternate;
+  filter: brightness(1.1) contrast(1.15) saturate(1.2) hue-rotate(2deg);
 }
 
-.power-off {
-  animation: power-off 0.4s ease-out forwards;
+/* Intensity 4 */
+.glitch-intensity-4 .static-overlay { opacity: 0.15; animation-duration: 0.04s; }
+.glitch-intensity-4 {
+  animation: screen-flicker 0.1s infinite alternate, text-jitter-severe 0.2s infinite alternate, color-aberration 0.7s infinite alternate;
+  filter: brightness(1.15) contrast(1.2) saturate(1.3) hue-rotate(-3deg);
 }
 
-@keyframes power-off {
-  0% {
-    transform: scale(1);
-    opacity: 1;
-  }
-  60% {
-    transform: scale(1.0, 0.001);
+/* Intensity 5 */
+.glitch-intensity-5 .static-overlay { opacity: 0.22; animation-duration: 0.03s; }
+.glitch-intensity-5 {
+  animation: screen-flicker 0.08s infinite alternate, text-jitter-severe 0.15s infinite alternate, color-aberration 0.5s infinite alternate, screen-jump 0.6s infinite alternate;
+  filter: brightness(1.2) contrast(1.25) saturate(1.4) hue-rotate(5deg);
+}
+
+/* --- Keyframe Animations --- */
+@keyframes screen-flicker { /* More subtle flicker base */
+  from { opacity: 1; }
+  to { opacity: 0.97; }
+}
+@keyframes scanline-move {
+  to { background-position-y: 3px; }
+}
+@keyframes static-flicker {
+   0% { transform: translate(1px, -1px); opacity: 0.9; }
+   25% { transform: translate(-1px, 1px); opacity: 0.6; }
+   50% { transform: translate(1px, 1px); opacity: 1.0; }
+   75% { transform: translate(-1px, -1px); opacity: 0.5; }
+   100% { transform: translate(1px, -1px); opacity: 0.9; }
+}
+@keyframes text-glow-pulse { /* Enhance text pulse */
+  0%, 100% { opacity: 1; filter: brightness(1); }
+  50% { opacity: 0.7; filter: brightness(1.5); }
+}
+@keyframes box-glow-pulse { /* Enhance box pulse */
+  0%, 100% { box-shadow: 0 0 6px 1px rgba(255, 176, 0, 0.4); opacity: 0.8; }
+  50% { box-shadow: 0 0 10px 3px rgba(255, 176, 0, 0.6); opacity: 1; }
+}
+@keyframes box-glow-subtle-pulse { /* Subtle persistent pulse */
+  0%, 100% { box-shadow: 0 0 8px 2px var(--terminal-glow), 0 0 14px 4px rgba(255, 176, 0, 0.3); opacity: 0.9; }
+  50% { box-shadow: 0 0 6px 1px var(--terminal-glow), 0 0 10px 3px rgba(255, 176, 0, 0.2); opacity: 1; }
+}
+@keyframes pulse { /* Standard pulse */
+  50% { opacity: 0.5; }
+}
+@keyframes spin-slow {
+  to { transform: rotate(360deg); }
+}
+/* Jitter Animations (Apply transform to element itself) */
+@keyframes text-jitter-mild {
+  25% { transform: translate(0.4px, -0.4px); }
+  75% { transform: translate(-0.4px, 0.4px); }
+}
+@keyframes text-jitter-moderate {
+  25% { transform: translate(0.7px, -0.3px); }
+  50% { transform: translate(-0.3px, 0.7px); }
+  75% { transform: translate(0.3px, -0.7px); }
+}
+@keyframes text-jitter-severe {
+  20% { transform: translate(1px, -0.6px) skewX(-1deg); }
+  40% { transform: translate(-0.6px, 1px) skewX(1deg); }
+  60% { transform: translate(0.6px, 0.6px) skewX(-0.5deg); }
+  80% { transform: translate(-1px, -0.3px) skewX(0.5deg); }
+}
+/* Color Aberration (Use on ::before/::after or duplicated text for full effect) */
+/* The filter hue-rotate provides a simpler global shift */
+@keyframes color-aberration {
+  0%, 100% { text-shadow: 0.6px 0 0 rgba(255,0,0,0.5), -0.6px 0 0 rgba(0,255,255,0.5); }
+  50% { text-shadow: -0.6px 0 0 rgba(255,0,0,0.5), 0.6px 0 0 rgba(0,255,255,0.5); }
+}
+@keyframes screen-jump { /* More jarring jumps */
+  10%, 30%, 50%, 70%, 90% { transform: translate(0, 0) scale(1); }
+  20% { transform: translate(2px, -3px) scale(1.01); }
+  40% { transform: translate(-2px, 2px) scale(0.99); }
+  60% { transform: translate(3px, 1px) scale(1.005); }
+  80% { transform: translate(-2px, -2px) scale(0.995); }
+}
+@keyframes message-flicker-in {
+  0% { opacity: 0; filter: brightness(3); transform: scale(1.05); }
+  30% { opacity: 0.7; filter: brightness(1.5); transform: scale(1); }
+  100% { opacity: 1; filter: brightness(1); transform: scale(1); }
+}
+@keyframes input-border-flicker-anim {
+   0%, 100% { opacity: 0.4; box-shadow: 0 0 1px 0px var(--terminal-border-glow); }
+   50% { opacity: 0.7; box-shadow: 0 0 3px 1px var(--terminal-border-glow); }
+   10%, 70% { opacity: 0.8; }
+   30%, 90% { opacity: 0.3; }
+}
+
+/* --- Component Specific Styles --- */
+.message-box {
+   @apply relative px-4 py-2 rounded max-w-[85%] whitespace-pre-wrap shadow-md;
+   background-color: var(--terminal-ari-bg);
+   color: var(--terminal-fg);
+   border: 1px solid rgba(255, 176, 0, 0.1); /* Subtle border */
+   animation: message-flicker-in 0.2s ease-out forwards; /* Flicker in */
+}
+.message-box-user {
+   background-color: var(--terminal-user-bg);
+   color: var(--terminal-glow);
+   border-color: rgba(255, 215, 0, 0.15);
+}
+.message-box-error {
+   background-color: var(--terminal-error-bg);
+   color: var(--terminal-error);
+   border: 1px solid var(--terminal-error-dim);
+   /* Apply error text glow */
+   animation: message-flicker-in 0.2s ease-out forwards, pulse 1s infinite ease-in-out;
+   /* text-shadow for error glow */
+   text-shadow: 0 0 1px rgba(255,68,68,0.5), 0 0 4px var(--terminal-error), 0 0 8px rgba(204,51,51,0.5);
+}
+.corner-detail {
+   @apply absolute w-2 h-2 border-[var(--terminal-border)] opacity-60;
+}
+
+.terminal-input {
+   @apply w-full bg-transparent px-4 py-2 focus:outline-none text-[var(--terminal-glow)] placeholder-[var(--terminal-fg-dim)] placeholder-opacity-50 disabled:opacity-40 disabled:cursor-not-allowed;
+}
+.input-container-border {
+   @apply absolute inset-[-1px] pointer-events-none border border-[var(--terminal-border)] rounded; /* Match input rounding if any */
+   animation: input-border-flicker-anim 1.8s infinite linear;
+}
+.input-container-border-loading { /* Override animation when loading */
+    animation: pulse 1.2s infinite ease-in-out;
+    border-color: var(--terminal-border-glow);
     opacity: 0.8;
-  }
-  100% {
-    transform: scale(0, 0.001);
-    opacity: 0;
-  }
 }
 
-.warning-pulse {
-  animation: warning-pulse 2s infinite;
+.terminal-button {
+    @apply border border-[var(--terminal-glow)] p-2 rounded transition-all duration-200 disabled:opacity-30 disabled:cursor-not-allowed text-[var(--terminal-glow)];
+    background: transparent; /* Ensure transparent base */
+}
+.terminal-button:not(:disabled):hover {
+    @apply bg-[var(--terminal-glow)] text-[var(--terminal-bg)] shadow-lg shadow-[var(--terminal-glow)]/30;
+}
+.terminal-button:not(:disabled):active {
+    transform: scale(0.95); /* Click feedback */
 }
 
-@keyframes warning-pulse {
-  0% {
-    background-color: rgba(255, 0, 0, 0);
-  }
-  50% {
-    background-color: rgba(255, 0, 0, 0.2);
-  }
-  100% {
-    background-color: rgba(255, 0, 0, 0);
-  }
+/* --- Markdown Specific Styles --- */
+.markdown-content { /* Apply this class to the div wrapping ReactMarkdown output */
+  p { @apply mb-3 last:mb-0 leading-relaxed; } /* Slightly more space */
+  a { @apply text-[var(--terminal-accent)] underline hover:text-[var(--terminal-glow)] hover:bg-yellow-900/30 px-1; }
+  code:not(pre > code) { @apply bg-black/60 px-1.5 py-0.5 rounded text-sm text-[var(--terminal-fg-dim)] border border-white/10; }
+  pre { @apply bg-black/80 p-4 rounded my-3 overflow-x-auto scrollbar-thin scrollbar-thumb-[var(--terminal-fg-dim)] scrollbar-track-transparent border border-white/10 text-sm; }
+  ul, ol { @apply list-inside pl-4 mb-3; }
+  ul { @apply list-disc; }
+  ol { @apply list-decimal; }
+  li { @apply mb-1; }
+  blockquote { @apply border-l-2 border-[var(--terminal-fg-dim)] pl-4 italic text-[var(--terminal-fg-dim)] mb-3 bg-black/20 py-1; }
+  hr { @apply border-t border-[var(--terminal-border)] my-4; }
+  strong { @apply font-bold text-[var(--terminal-glow)]; }
+  em { @apply italic text-[var(--terminal-accent)]; }
 }
 
-.static-burst {
-  position: relative;
+/* --- Utilities --- */
+.scrollbar-none { /* Utility */
+    -ms-overflow-style: none; scrollbar-width: none;
 }
-
-.static-burst::before {
-  content: "";
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: white;
-  opacity: 0;
-  pointer-events: none;
+.scrollbar-none::-webkit-scrollbar { display: none; }
+.scrollbar-thin { /* Utility */
+   scrollbar-width: thin;
+   scrollbar-color: var(--terminal-fg-dim) transparent;
 }
-
-.static-burst.active::before {
-  animation: static-burst 0.1s steps(1) forwards;
+.scrollbar-thin::-webkit-scrollbar { width: 5px; }
+.scrollbar-thin::-webkit-scrollbar-track { background: transparent; }
+.scrollbar-thin::-webkit-scrollbar-thumb {
+   background-color: var(--terminal-fg-dim);
+   border-radius: 3px;
+   border: 1px solid var(--terminal-bg);
 }
-
-@keyframes static-burst {
-  0% {
-    opacity: 0.3;
-  }
-  25% {
-    opacity: 0.1;
-  }
-  50% {
-    opacity: 0.3;
-  }
-  75% {
-    opacity: 0.1;
-  }
-  100% {
-    opacity: 0;
-  }
-}
-
