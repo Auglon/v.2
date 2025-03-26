@@ -163,7 +163,9 @@ body {
 .scrollbar-thin::-webkit-scrollbar-thumb { background-color: var(--terminal-fg-dim); border-radius: 3px; border: 1px solid var(--terminal-bg); }
 `;
 
-export function ChatInterface() {
+export default function ChatInterface() { // Add 'default' here
+  // ... component code
+}
   // --- State ---
   const [isBooted, setIsBooted] = useState(false);
   const [isAudioEnabled, setIsAudioEnabled] = useState(false);
