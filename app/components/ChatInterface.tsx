@@ -165,7 +165,7 @@ body {
 
 export default function ChatInterface() { // Add 'default' here
   // ... component code
-}
+
   // --- State ---
   const [isBooted, setIsBooted] = useState(false);
   const [isAudioEnabled, setIsAudioEnabled] = useState(false);
