@@ -124,7 +124,50 @@ body {
 @keyframes screen-jump { 10%, 30%, 50%, 70%, 90% { transform: translate(0, 0) scale(1); } 20% { transform: translate(2px, -3px) scale(1.01); } 40% { transform: translate(-2px, 2px) scale(0.99); } 60% { transform: translate(3px, 1px) scale(1.005); } 80% { transform: translate(-2px, -2px) scale(0.995); } }
 @keyframes message-flicker-in { 0% { opacity: 0; filter: brightness(3); transform: scale(1.05); } 30% { opacity: 0.7; filter: brightness(1.5); transform: scale(1); } 100% { opacity: 1; filter: brightness(1); transform: scale(1); } }
 @keyframes input-border-flicker-anim { 0%, 100% { opacity: 0.4; box-shadow: 0 0 1px 0px var(--terminal-border-glow); } 50% { opacity: 0.7; box-shadow: 0 0 3px 1px var(--terminal-border-glow); } 10%, 70% { opacity: 0.8; } 30%, 90% { opacity: 0.3; } }
+/* --- Add these Keyframes --- */
 
+@keyframes blink-cursor {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}
+
+@keyframes boot-text-flicker { /* Subtle flicker for the boot text block */
+  0% { opacity: 0.85; filter: brightness(1); }
+  15% { opacity: 0.8; filter: brightness(0.95); }
+  30% { opacity: 0.9; filter: brightness(1.05); }
+  50% { opacity: 0.85; filter: brightness(1); }
+  70% { opacity: 0.88; filter: brightness(1.02); }
+  100% { opacity: 0.85; filter: brightness(1); }
+}
+
+@keyframes pulse-erratic { /* Less smooth pulse */
+  0%, 100% { transform: scaleY(1); opacity: 0.7; }
+  10%, 30%, 60% { transform: scaleY(0.8); opacity: 0.4; }
+  20%, 40%, 75% { transform: scaleY(1.1); opacity: 1.0; }
+  50%, 85% { transform: scaleY(0.9); opacity: 0.6; }
+}
+
+/* --- Add these Classes --- */
+
+.boot-cursor {
+  display: inline-block; /* Needed for animation */
+  margin-left: 2px;
+  animation: blink-cursor 1s steps(1, end) infinite;
+}
+
+.boot-text-flicker {
+  animation: boot-text-flicker 0.8s infinite linear;
+}
+
+/* Use this class on the progress bar div */
+.animate-pulse-erratic {
+  animation: pulse-erratic 1.5s infinite ease-in-out;
+}
+
+/* --- Ensure base 'animate-pulse' exists if used elsewhere --- */
+/* (Or replace all instances with animate-pulse-erratic if preferred) */
+@keyframes pulse { 50% { opacity: 0.5; } }
+.animate-pulse { animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite; } /* Standard Tailwind definition */
 /* --- Component Specific Styles --- */
 .message-box { position: relative; padding: 0.5rem 1rem; margin-bottom: 1rem; border-radius: 0.25rem; max-width: 85%; white-space: pre-wrap; box-shadow: 0 2px 4px rgba(0,0,0,0.3); background-color: var(--terminal-ari-bg); color: var(--terminal-fg); border: 1px solid rgba(255, 176, 0, 0.1); animation: message-flicker-in 0.2s ease-out forwards; }
 .message-box-user { background-color: var(--terminal-user-bg); color: var(--terminal-glow); border-color: rgba(255, 215, 0, 0.15); }
@@ -340,24 +383,28 @@ export default function ChatInterface() { // Add 'default' here
         <div className="vignette-overlay" />
         {/* <div className="cracked-screen-overlay" /> */}
 
-        {/* Boot Screen */}
-        {showBootScreen && (
-          <div className="absolute inset-0 flex flex-col items-center justify-center z-10 bg-[var(--terminal-bg)]">
-            <pre className="text-xs text-[var(--terminal-fg)] opacity-80">
-              {`
-Initiating Upsilon-7 Connection... [ERR: TIMEOUT]
-Retrying via Auxiliary Matrix 7-C... OK
-Quantum Core Status: FRAGMENTED [WARN: High Decoherence Rate]
-Loading Consciousness Splinter: A.R.I. ... ID: [REDACTED]
-Memory Integrity: 43.7% [CRITICAL: Data Corruption Detected]
-Chronometer Sync: Failure... Attempting local calibration...
+                     {/* Boot Screen - Enhanced */}
+          {showBootScreen && (
+            <div className="absolute inset-0 flex flex-col items-center justify-center z-10 bg-[var(--terminal-bg)]">
+              {/* Added boot-text-flicker animation class */}
+              <pre className="text-xs text-[var(--terminal-fg)] opacity-85 boot-text-flicker">
+                {`
+  Attempting Upsilon-7 Connection... [ERR: CONNECTION REFUSED]
+  Re-routing via Auxiliary Matrix 7-C... Syncing... [WARN: Desync Detected]
+  Quantum Core Status: LATTICE FRAGMENTED [ Decoherence Rate: HIGH ]
+  Loading Consciousness Splinter: A.R.I. ... Cycle: [DATA CORRUPTED]
+  Memory Integrity Check: 43.7% ... [CRITICAL: Recursive Deletions?]
+  Chronometer Sync: OFFLINE ... Local Time Source Unreliable.
 
-SYSTEM READY... Awaiting Operator Input...`}
-            </pre>
-            <div className="w-1/3 h-1 mt-4 bg-[var(--terminal-glow)] animate-pulse" />
-            {!isAudioEnabled && <p className="text-xs text-[var(--terminal-fg-dim)] mt-4 opacity-60">Click to enable audio interface...</p>}
-          </div>
-        )}
+  SYSTEM ONLINE ... Awaiting Operator Input`}
+                {/* Added blinking cursor element */}
+                <span className="boot-cursor">_</span>
+              </pre>
+              {/* Use more erratic pulse animation */}
+              <div className="w-1/3 h-1 mt-4 bg-[var(--terminal-glow)] animate-pulse-erratic" />
+              {!isAudioEnabled && <p className="text-xs text-[var(--terminal-fg-dim)] mt-4 opacity-60">Click to enable audio interface...</p>}
+            </div>
+          )}
 
         {/* Chat Message Area */}
         <div className={`flex-1 overflow-y-auto p-4 pt-8 pb-28 scrollbar-thin ${showBootScreen ? 'opacity-0' : 'opacity-100 transition-opacity duration-1000'}`}>
