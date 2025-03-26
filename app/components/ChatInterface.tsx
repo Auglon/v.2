@@ -1,3 +1,4 @@
+"use client";
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useChat, Message } from 'ai/react';
 import { Send } from 'lucide-react';
