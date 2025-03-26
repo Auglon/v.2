@@ -309,7 +309,7 @@
   p { @apply mb-2 last:mb-0; }
   a { @apply text-[var(--terminal-accent)] underline hover:text-[var(--terminal-glow)]; }
   code:not(pre > code) { @apply bg-black/50 px-1 py-0.5 rounded text-sm text-[var(--terminal-fg-dim)]; }
-  pre { @apply bg-black/70 p-3 rounded my-2 overflow-x-auto scrollbar-thin scrollbar-track-transparent; }
+  pre { @apply bg-black/70 p-3 rounded my-2 overflow-x-auto scrollbar-track-transparent; }
   /* Add styles for ul, ol, li, blockquote etc. matching the theme */
   ul, ol { @apply list-inside list-disc pl-4 mb-2; }
   blockquote { @apply border-l-2 border-[var(--terminal-fg-dim)] pl-3 italic text-[var(--terminal-fg-dim)] mb-2; }
