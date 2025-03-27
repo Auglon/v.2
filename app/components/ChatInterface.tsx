@@ -485,7 +485,9 @@ export default function ChatInterface() { // Add 'default' here
           className="fixed bottom-0 inset-x-0 p-3 pb-4 bg-gradient-to-t from-[var(--terminal-bg)] via-[var(--terminal-bg)] to-transparent z-20"
         >
           <div className="max-w-4xl mx-auto flex items-center gap-2">
-            <span className={`text-[var(--terminal-glow)] ${isLoading ? 'animate-pulse' : ''}`}>></span>
+           {/* Use > for the greater-than symbol within JSX for clarity and safety */}
+<span className={`text-[var(--terminal-glow)] ${isLoading ? 'animate-pulse' : ''}`}>></span>
+                                                                           
             <div className="flex-1 relative">
               <div className={`input-container-border ${isLoading ? 'input-container-border-loading' : ''}`} />
               <input
