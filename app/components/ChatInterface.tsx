@@ -4,8 +4,9 @@ import { useChat, Message } from 'ai/react';
 import { Send } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
-import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
-import { vscDarkPlus as syntaxTheme } from 'react-syntax-highlighter/dist/esm/styles/prism'; // Choose a theme
+import { PrismAsyncLight as SyntaxHighlighter } from 'react-syntax-highlighter';
+import type { SyntaxHighlighterProps } from 'react-syntax-highlighter';
+import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
 
 // --- Configuration ---
 const AUDIO_ASSETS = {
@@ -20,6 +21,13 @@ const AUDIO_ASSETS = {
 
 interface CustomMessage extends Message {
   isComplete?: boolean;
+}
+
+interface CodeProps extends React.ClassAttributes<HTMLElement>, React.HTMLAttributes<HTMLElement> {
+  inline?: boolean;
+  className?: string;
+  node?: any;
+  children: React.ReactNode;
 }
 
 // --- CSS Content (Refined Version) ---
@@ -447,29 +455,32 @@ export default function ChatInterface() { // Add 'default' here
                     <div className="corner-detail absolute -bottom-px -left-px border-l border-b" />
                     <div className="corner-detail absolute -bottom-px -right-px border-r border-b" />
 
-                    <div className="markdown-content"> {/* Apply markdown styles */}
+                    <div className="markdown-content">
                       <ReactMarkdown
-                        children={isARI ? applyTextGlitch(msg.content) as string : msg.content}
-                        remarkPlugins={[remarkGfm]}
+                        remarkPlugins={[remarkGfm as any]}
                         components={{
-                          code({ node, inline, className, children, ...props }) {
+                          code(props) {
+                            const {className, children, ...rest} = props;
                             const match = /language-(\w+)/.exec(className || '');
-                            return !inline && match ? (
+                            return match ? (
                               <SyntaxHighlighter
-                                children={String(children).replace(/\n$/, '')}
-                                style={syntaxTheme} // Use imported theme
+                                {...rest as any}
+                                style={vscDarkPlus}
                                 language={match[1]}
                                 PreTag="div"
-                                {...props}
-                              />
+                              >
+                                {String(children).replace(/\n$/, '')}
+                              </SyntaxHighlighter>
                             ) : (
-                              <code className={className} {...props}>
+                              <code className={className} {...rest}>
                                 {children}
                               </code>
                             );
                           },
                         }}
-                      />
+                      >
+                        {isARI ? applyTextGlitch(msg.content) as string : msg.content}
+                      </ReactMarkdown>
                     </div>
                   </div>
                 </div>
@@ -486,8 +497,7 @@ export default function ChatInterface() { // Add 'default' here
         >
           <div className="max-w-4xl mx-auto flex items-center gap-2">
            {/* Use > for the greater-than symbol within JSX for clarity and safety */}
-// Line 489 - Corrected
-<span className={`text-[var(--terminal-glow)] ${isLoading ? 'animate-pulse' : ''}`}>{'>'}</span>
+            <span className={`text-[var(--terminal-glow)] ${isLoading ? 'animate-pulse' : ''}`}>{'>'}</span>
                                                                            
             <div className="flex-1 relative">
               <div className={`input-container-border ${isLoading ? 'input-container-border-loading' : ''}`} />
