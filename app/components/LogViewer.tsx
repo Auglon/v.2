@@ -53,7 +53,8 @@ export default function LogViewer({ onClose }: { onClose?: () => void }) {
     const entries: LogEntry[] = [];
     
     // Pattern 1: Standard format (Log #X - Date, Time)
-    const standardPattern = /- \*\*Log #(\d+) - ([^,]+(?:, \d{4})?), (\d{2}:\d{2}) \(Station Time\)\*\*\s*\n\s*\*\*Author:\*\* ([^,\n]+)(?:, ([^\n]+))?\s*\n\s*\*\*Content:\*\* ([^]+?)(?=\n\n|- \*\*Log|$)/gm;
+    // Updated to capture content AND any images/captions that follow
+    const standardPattern = /- \*\*Log #(\d+) - ([^,]+(?:, \d{4})?), (\d{2}:\d{2}) \(Station Time\)\*\*\s*\n\s*\*\*Author:\*\* ([^,\n]+)(?:, ([^\n]+))?\s*\n\s*\*\*Content:\*\* ([^]+?)(?=\n\n- \*\*Log #|###|$)/gm;
     
     // Pattern 2: Corrupted format (July style - Date, [TIMESTAMP])
     const corruptedPattern = /- \*\*([^,]+), \[([^\]]+)\]\*\*\s*\n\s*\*\*Source:\*\* ([^\n]+)\s*\n\s*\*\*Content:\*\* ([^]+?)(?=\n\n|- \*\*|$)/gm;

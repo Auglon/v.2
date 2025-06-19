@@ -1,0 +1,12 @@
+# Ignore ESLint during build
+.eslintrc.json
+.eslintignore
+
+# Development files
+*.log
+.env.local
+.env.development
+
+# User data (not for deployment)
+/UserHistories/
+/ARILogs/
