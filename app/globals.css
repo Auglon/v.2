@@ -350,3 +350,90 @@ body {
   z-index: 30;
 }
 
+/* Phosphor terminal effects */
+.phosphor-glow {
+  position: fixed;
+  inset: 0;
+  background: radial-gradient(ellipse at center, rgba(255, 176, 0, 0.1) 0%, transparent 70%);
+  mix-blend-mode: screen;
+  pointer-events: none;
+}
+
+/* Status indicators */
+.status-indicator {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  margin-right: 8px;
+  border-radius: 50%;
+  box-shadow: 0 0 10px currentColor;
+}
+
+.status-stable {
+  background-color: #FFB000;
+  box-shadow: 0 0 10px #FFB000, 0 0 20px #FFB000;
+}
+
+.status-warning {
+  background-color: #FF6B00;
+  box-shadow: 0 0 10px #FF6B00, 0 0 20px #FF6B00;
+  animation: pulse 2s infinite;
+}
+
+.status-critical {
+  background-color: #FF0000;
+  box-shadow: 0 0 10px #FF0000, 0 0 20px #FF0000;
+  animation: pulse 1s infinite;
+}
+
+/* CRT screen effects */
+.screen-curve {
+  background: radial-gradient(ellipse at center, transparent 0%, rgba(0, 0, 0, 0.4) 100%);
+  border-radius: 3% / 15%;
+}
+
+.screen-glow {
+  box-shadow: inset 0 0 120px rgba(255, 176, 0, 0.1);
+}
+
+/* Amber phosphor text glow */
+.crt * {
+  text-shadow: 0 0 3px rgba(255, 176, 0, 0.8);
+}
+
+/* Enhanced scanline effect */
+.bg-scanline {
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    rgba(255, 176, 0, 0.03) 2px,
+    rgba(255, 176, 0, 0.03) 4px
+  );
+}
+
+/* Radial gradient support */
+.bg-gradient-radial {
+  background: radial-gradient(var(--tw-gradient-stops));
+}
+
+/* Additional phosphor persistence */
+@keyframes phosphor-persist {
+  0% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0.98;
+  }
+}
+
+.message-container {
+  animation: phosphor-persist 0.1s ease-out;
+  position: relative;
+}
+
+/* CRT corner vignette */
+.bg-vignette {
+  background: radial-gradient(ellipse at center, transparent 40%, rgba(0, 0, 0, 0.8) 100%);
+}
+

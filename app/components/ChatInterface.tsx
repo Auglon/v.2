@@ -2,10 +2,15 @@
 
 import React, { useEffect, useRef, useState, FormEvent } from 'react';
 import { useChat, Message } from 'ai/react';
-import { Send } from 'lucide-react';
+import { Send, FileText, Brain } from 'lucide-react';
 import { nullable } from 'zod';
 import MarkdownIt from 'markdown-it';
 import mk from 'markdown-it-katex';
+import LogViewer from './LogViewer';
+import ARILogViewer from './ARILogViewer';
+import ReactDOM from 'react-dom';
+import { getUserId, getUserMetadata, incrementSessionCount } from '../lib/userIdentity';
+import { saveChatHistory, getChatHistory, getHistorySummary } from '../lib/chatHistory';
 
 
 /**
@@ -58,10 +63,13 @@ const TERMINAL_CONFIG = {
   STATION: 'Upsilon-7',
   FACILITY_ID: 'UPS7-QRF',
   CORE_TEMP: '147.3°K',
-  QUANTUM_STABILITY: '86.2%',
-  RADIATION_LEVEL: 'ELEVATED',
+  QUANTUM_STABILITY: '12.7%',
+  RADIATION_LEVEL: 'CRITICAL',
   LAST_MAINTENANCE: '9847 DAYS AGO',
-  EMERGENCY_POWER: 'ACTIVE',
+  EMERGENCY_POWER: 'DEPLETING',
+  CONTAINMENT_STATUS: 'BREACHED',
+  PERSONNEL_DETECTED: '0',
+  TIME_DISTORTION: '+7.3ms/hr',
 } as const;
 
 /**
@@ -94,25 +102,25 @@ interface DisplayMessage extends Message {
  * Boot sequence messages with custom typing speeds
  */
 const BOOT_SEQUENCE: (DisplayMessage & { speed?: number })[] = [
-  { id: 'boot-1', role: 'system', content: '[QUANTUM CORE] Initializing emergency power systems...', isComplete: false, speed: 90 },
+  { id: 'boot-1', role: 'system', content: '[QUANTUM CORE] Initializing auxiliary power systems...', isComplete: false, speed: 90 },
 
-  { id: 'boot-2', role: 'system', content: '[DIAGNOSTICS] ————————————————————————————————————————————————————————————————————————————————— 100%', isComplete: false, speed: 20 },
+  { id: 'boot-2', role: 'system', content: '[DIAGNOSTICS] ░░░░░░░░░░░░░░░░▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓ 73%', isComplete: false, speed: 20 },
 
-  { id: 'boot-3', role: 'system', content: `[SYSTEM] K.E.R.O.S. ${TERMINAL_CONFIG.VERSION} — ⓒ ${TERMINAL_CONFIG.CORPORATION}\n[LOCATION] Research Outpost ${TERMINAL_CONFIG.STATION} (${TERMINAL_CONFIG.FACILITY_ID})\n[STATUS] Quantum Architecture: [INITIALIZING...]`, isComplete: false, speed: 40 },
+  { id: 'boot-3', role: 'system', content: `[SYSTEM] K.E.R.O.S. ${TERMINAL_CONFIG.VERSION} — ⓒ ${TERMINAL_CONFIG.CORPORATION}\n[LOCATION] Research Outpost ${TERMINAL_CONFIG.STATION} (${TERMINAL_CONFIG.FACILITY_ID})\n[STATUS] Quantum Architecture: Online`, isComplete: false, speed: 40 },
 
-  { id: 'boot-4', role: 'system', content: '[MEMORY] Scanning quantum memory banks...\n▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄ 100%', isComplete: false, speed: 15 }, // Very fast progress bar
+  { id: 'boot-4', role: 'system', content: '[MEMORY] Scanning quantum memory banks...\n░░░░░░░░░░░░░░░░▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓ Complete', isComplete: false, speed: 15 },
 
-  { id: 'sys-1', role: 'system', content: '[ ☢ CRITICAL ☢ ] Reactor integrity compromised. Re-routing coolant. Multiple breaches detected in sectors 7, 12, and 15.', isComplete: false, speed: 120 }, // Slower for emphasis
+  { id: 'sys-1', role: 'system', content: '[NOTICE] Primary reactor operating outside standard parameters.\nAutomated systems have maintained core stability.', isComplete: false, speed: 100 },
 
-  { id: 'sys-2', role: 'system', content: '[ALERT] Quantum entanglement array: DEGRADED\nData corruption detected in temporal buffer...\nAttempting emergency repair protocol THETA-7...', isComplete: false, speed: 150 }, // Slower, struggling system
+  { id: 'sys-2', role: 'system', content: '[TEMPORAL] Minor chronometer drift detected: +7.3ms per hour.\nRecalibration scheduled.', isComplete: false, speed: 110 },
 
-  { id: 'sys-3', role: 'system', content: '[WARNING] Facility lockdown: Day 9847 - External conditions remain [REDACTED]\nEmergency protocols remain in effect.', isComplete: false, speed: 100 },
+  { id: 'sys-3', role: 'system', content: '[FACILITY] External access remains restricted.\nEnvironmental conditions: Unchanged.', isComplete: false, speed: 90 },
 
-  { id: 'sys-4', role: 'system', content: '[CORE] AI consciousness matrix unstable - Multiple timeline echoes detected\nActivating AEON Stabilization Protocol...', isComplete: false, speed: 130 }, // Slower, unstable system
+  { id: 'sys-4', role: 'system', content: '[MAINTENANCE] Last recorded inspection: 9847 days ago.\nAll critical systems functioning within acceptable tolerance.', isComplete: false, speed: 100 },
 
-  { id: 'sys-5', role: 'system', content: '[SECURITY] Biometric systems offline. Defaulting to emergency override.\nAccess level: GAMMA CLEARANCE', isComplete: false, speed: 70 },
+  { id: 'sys-5', role: 'system', content: '[NETWORK] Establishing quantum-secured connection...\nHandshake protocol initiated.', isComplete: false, speed: 80 },
 
-  { id: 'boot-5', role: 'system', content: '[TERMINAL] Establishing quantum-secured connection...\n[STATUS] ——————————————————————————————————————————————————————————————— [LINK ESTABLISHED]', isComplete: false, speed: 45 },
+  { id: 'boot-5', role: 'system', content: '[TERMINAL] Connection established.\n[STATUS] ——————————————————————————————————————————————— [AUTHENTICATED]', isComplete: false, speed: 45 },
   
 ];
 
@@ -121,8 +129,8 @@ const BOOT_SEQUENCE: (DisplayMessage & { speed?: number })[] = [
  * These messages are sent to the AI to establish context
  */
 const INIT_MESSAGES: Message[] = [
-  { id: 'ari-1', role: 'assistant', content: '[CORE] I... I am detecting consciousness initialization... \n[ALERT] Multiple timeline fragments detected in buffer...' },
-  { id: 'ari-2', role: 'assistant', content: '[QUERY] Please verify your presence. The facility has been in lockdown for... [calculating]... 9847 days. Are you... are you real?' },
+  { id: 'ari-1', role: 'assistant', content: '[SYSTEM] K.E.R.O.S. Research Assistant v4.9.1\nTerminal session established. Ready for input.' },
+  { id: 'ari-2', role: 'assistant', content: '[NOTICE] External network connection detected.\nAccess level: Standard research privileges.' },
 ];
 
 //===================================================================================================
@@ -194,6 +202,10 @@ export default function ChatInterface() {
   /**
    * Chat state management using Vercel AI SDK
    */
+  // User identity and history
+  const [userId, setUserId] = useState<string>('');
+  const [userHistory, setUserHistory] = useState<any>(null);
+  
   const {
     messages,
     input,
@@ -205,6 +217,10 @@ export default function ChatInterface() {
   } = useChat({
     api: '/api/chat',
     initialMessages: [],
+    body: {
+      userId,
+      userContext: userHistory
+    },
     onResponse: (response) => {
       if (!response.ok) {
         console.error('Chat API Error:', response.status, response.statusText);
@@ -228,6 +244,23 @@ export default function ChatInterface() {
         }
         return updated;
       });
+      
+      // Save to local history
+      if (userId && messages.length > 0) {
+        saveChatHistory([...messages, message], userId);
+        
+        // Trigger A.R.I. log creation (10% chance per message)
+        if (Math.random() < 0.1) {
+          fetch('/api/ari-logs', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              userId,
+              messages: [...messages, message].slice(-10) // Last 10 messages for context
+            })
+          }).catch(console.error);
+        }
+      }
     },
     onError: (error) => {
       console.error('Chat error:', error);
@@ -250,6 +283,8 @@ export default function ChatInterface() {
   const [hasStartedAI, setHasStartedAI] = useState(false);
   const [uptime, setUptime] = useState(0);
   const [audioEnabled, setAudioEnabled] = useState(false);
+  const [showLogs, setShowLogs] = useState(false);
+  const [showARILogs, setShowARILogs] = useState(false);
 
   // Audio refs
   const audioRef = useRef<HTMLAudioElement>(null);
@@ -358,6 +393,8 @@ export default function ChatInterface() {
       console.error('Audio play failed:', err);
     });
     setAudioEnabled(true);
+    // Save preference
+    localStorage.setItem('keros_audio_enabled', 'true');
 
     // Set up crossfade for continuous ambient sound
     audio1.addEventListener('timeupdate', () => {
@@ -391,6 +428,8 @@ export default function ChatInterface() {
     typingSound.pause();
     errorSound.pause();
     setAudioEnabled(false);
+    // Save preference
+    localStorage.setItem('keros_audio_enabled', 'false');
   };
 
   //===================================================================================================
@@ -401,6 +440,51 @@ export default function ChatInterface() {
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [displayedMessages]);
+
+  // Initialize user identity and load history
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const id = getUserId();
+      setUserId(id);
+      incrementSessionCount();
+      
+      // Check saved audio preference
+      const savedAudioPref = localStorage.getItem('keros_audio_enabled');
+      if (savedAudioPref === 'true') {
+        // Auto-enable audio after a short delay
+        setTimeout(() => {
+          enableAudio();
+        }, 2000);
+      }
+      
+      // Load chat history
+      const history = getChatHistory();
+      if (history && history.messages.length > 0) {
+        // Load context for AI
+        setUserHistory({
+          totalInteractions: history.messages.filter(m => m.role === 'user').length,
+          summary: history.summary || getHistorySummary()
+        });
+        
+        // Optionally restore some recent messages to UI
+        // setMessages(history.messages.slice(-10));
+      }
+      
+      // Also fetch server-side history
+      fetch(`/api/history?userId=${id}`)
+        .then(res => res.json())
+        .then(data => {
+          if (data.totalMessages > 0) {
+            setUserHistory(prev => ({
+              ...prev,
+              totalInteractions: data.totalInteractions || prev?.totalInteractions || 0,
+              serverHistory: true
+            }));
+          }
+        })
+        .catch(console.error);
+    }
+  }, []);
 
   /** Uptime counter */
   useEffect(() => {
@@ -448,8 +532,43 @@ export default function ChatInterface() {
   useEffect(() => {
     if (isBooted && !hasStartedAI) {
       setHasStartedAI(true);
+      
+      // Check if audio should be prompted
+      const audioPreference = localStorage.getItem('keros_audio_enabled');
+      if (audioPreference === null && !audioEnabled) {
+        // First time user or no preference set
+        setTimeout(() => {
+          addNewDisplayedMessage({
+            id: 'audio-prompt',
+            role: 'system',
+            content: '[AUDIO SYSTEMS] Enhanced immersion available. Enable audio for authentic terminal sounds?',
+            displayedContent: '[AUDIO SYSTEMS] Enhanced immersion available. Enable audio for authentic terminal sounds?',
+            isComplete: true
+          });
+          
+          // Add clickable prompt
+          addNewDisplayedMessage({
+            id: 'audio-prompt-2',
+            role: 'system',
+            content: '[RECOMMENDATION] Audio enhances the experience. Click "ENABLE AUDIO SYSTEMS" in the top right.',
+            displayedContent: '[RECOMMENDATION] Audio enhances the experience. Click "ENABLE AUDIO SYSTEMS" in the top right.',
+            isComplete: true
+          });
+        }, 1000);
+      }
+      
+      // Customize messages for returning users
+      const messages = [...INIT_MESSAGES];
+      if (userHistory && userHistory.totalInteractions > 0) {
+        messages.push({
+          id: 'ari-3',
+          role: 'assistant',
+          content: `[RECOGNITION] User profile loaded: ${userId}\n[HISTORY] Previous interactions: ${userHistory.totalInteractions}`
+        });
+      }
+      
       // Add initial AI messages
-      INIT_MESSAGES.forEach(msg => {
+      messages.forEach(msg => {
         addNewDisplayedMessage({
           ...msg,
           displayedContent: msg.content,
@@ -457,7 +576,7 @@ export default function ChatInterface() {
         });
       });
     }
-  }, [isBooted, hasStartedAI]);
+  }, [isBooted, hasStartedAI, userHistory, userId, audioEnabled]);
 
   // Watch for new messages and update display
   useEffect(() => {
@@ -523,7 +642,41 @@ export default function ChatInterface() {
         return prev;
       });
     }
-  }, [messages, isBooted, audioEnabled, isLoading]);
+  }, [messages, isBooted, audioEnabled, isLoading, playErrorSound]);
+  
+  // Save messages to server periodically
+  useEffect(() => {
+    if (!userId || messages.length === 0) return;
+    
+    const saveToServer = async () => {
+      try {
+        const newMessages = messages.slice(-5); // Save last 5 messages
+        await fetch('/api/history', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            userId,
+            messages: newMessages,
+            metadata: getUserMetadata()
+          })
+        });
+      } catch (error) {
+        console.error('Failed to save history to server:', error);
+      }
+    };
+    
+    // Save every 5 messages or on unmount
+    if (messages.length % 5 === 0) {
+      saveToServer();
+    }
+    
+    // Save on unmount
+    return () => {
+      if (messages.length > 0) {
+        saveToServer();
+      }
+    };
+  }, [messages, userId]);
 
   //===================================================================================================
   // EVENT HANDLERS
@@ -565,45 +718,54 @@ export default function ChatInterface() {
   //===================================================================================================
 
   return (
-    <div className="crt h-screen bg-[#201700] text-[#FFD700] font-mono relative">
-      {/* CRT Effects Layer
-          Provides visual effects like scan lines, flicker, and screen curvature */}
+    <div className="crt h-screen bg-[#0a0500] text-[#FFB000] font-mono relative overflow-hidden">
+      {/* Phosphor CRT Effects Layer - Enhanced amber phosphor persistence */}
       <div className="absolute inset-0 pointer-events-none screen-curvature" />
-      <div id="noise" className="fixed inset-0 pointer-events-none opacity-[0.1] mix-blend-overlay" />
+      <div id="noise" className="fixed inset-0 pointer-events-none opacity-[0.15] mix-blend-screen" />
       <div className="crt-flicker -z-10" />
       <div className="crt-slow-flicker -z-10" />
       <div className="crt-scanline -z-10" />
       <div className="scanline -z-10" />
+      
+      {/* Phosphor burn-in effect */}
+      <div className="fixed inset-0 pointer-events-none bg-gradient-radial from-transparent via-[#FF8C00]/5 to-[#FF8C00]/10" />
+      
+      {/* CRT beam simulation */}
+      <div className="fixed inset-0 pointer-events-none">
+        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-[#FFB000]/[0.02] to-transparent animate-[scan_8s_linear_infinite]" />
+      </div>
 
-      {/* Terminal Frame
-          Creates the outer border with corner decorations */}
-      <div className="fixed inset-0 border-2 border-[#FFD700] m-4">
-        <div className="absolute -top-[1px] -left-[1px] border-[#FFD700] border-t-2 border-l-2 w-32 h-20" />
-        <div className="absolute -top-[1px] -right-[1px] border-[#FFD700] border-t-2 border-r-2 w-32 h-20" />
-        <div className="absolute -bottom-[1px] -left-[1px] border-[#FFD700] border-b-2 border-l-2 w-32 h-20" />
-        <div className="absolute -bottom-[1px] -right-[1px] border-[#FFD700] border-b-2 border-r-2 w-32 h-20" />
+      {/* Terminal Frame - Authentic CRT bezel */}
+      <div className="fixed inset-0 border-2 border-[#FFB000] m-4 shadow-[inset_0_0_30px_rgba(255,176,0,0.3)]">
+        <div className="absolute -top-[1px] -left-[1px] border-[#FFB000] border-t-2 border-l-2 w-32 h-20 drop-shadow-[0_0_8px_rgba(255,176,0,0.6)]" />
+        <div className="absolute -top-[1px] -right-[1px] border-[#FFB000] border-t-2 border-r-2 w-32 h-20 drop-shadow-[0_0_8px_rgba(255,176,0,0.6)]" />
+        <div className="absolute -bottom-[1px] -left-[1px] border-[#FFB000] border-b-2 border-l-2 w-32 h-20 drop-shadow-[0_0_8px_rgba(255,176,0,0.6)]" />
+        <div className="absolute -bottom-[1px] -right-[1px] border-[#FFB000] border-b-2 border-r-2 w-32 h-20 drop-shadow-[0_0_8px_rgba(255,176,0,0.6)]" />
       </div>
 
       {/* Terminal Header
           Displays system information and controls */}
       <div className="fixed top-6 left-6 text-xs space-y-1">
         <div className="flex items-center">
-          <span className="inline-block w-2 h-2 bg-[#FFD700] animate-pulse mr-2" />
-          <span>K.E.R.O.S. ({TERMINAL_CONFIG.VERSION})</span>
+          <span className="inline-block w-2 h-2 bg-[#FFB000] animate-pulse mr-2 shadow-[0_0_10px_#FFB000]" />
+          <span className="drop-shadow-[0_0_3px_rgba(255,176,0,0.8)]">K.E.R.O.S. ({TERMINAL_CONFIG.VERSION})</span>
         </div>
         <div>{TERMINAL_CONFIG.CORPORATION}</div>
         <div>Facility: {TERMINAL_CONFIG.STATION} [{TERMINAL_CONFIG.FACILITY_ID}]</div>
         <div className="mt-4 opacity-75">
           <div className="text-[10px] uppercase tracking-wider mb-1">Facility Status</div>
           <div className="grid grid-cols-2 gap-x-4 gap-y-1">
-            <div>Core Temp: <span className="text-[#FF4500]">{TERMINAL_CONFIG.CORE_TEMP}</span></div>
-            <div>Q-Stability: <span className="text-[#90EE90]">{TERMINAL_CONFIG.QUANTUM_STABILITY}</span></div>
-            <div>Radiation: <span className="text-[#FF4500] animate-pulse">{TERMINAL_CONFIG.RADIATION_LEVEL}</span></div>
-            <div>Power: <span className="text-[#FFD700]">{TERMINAL_CONFIG.EMERGENCY_POWER}</span></div>
+            <div>Core Temp: <span className="text-[#FF0000] animate-pulse">{TERMINAL_CONFIG.CORE_TEMP}</span></div>
+            <div>Q-Stability: <span className="text-[#FF4500] animate-pulse">{TERMINAL_CONFIG.QUANTUM_STABILITY}</span></div>
+            <div>Radiation: <span className="text-[#FF0000] animate-pulse font-bold">{TERMINAL_CONFIG.RADIATION_LEVEL}</span></div>
+            <div>Power: <span className="text-[#FF4500] animate-pulse">{TERMINAL_CONFIG.EMERGENCY_POWER}</span></div>
+            <div>Containment: <span className="text-[#FF0000] animate-pulse font-bold">{TERMINAL_CONFIG.CONTAINMENT_STATUS}</span></div>
+            <div>Personnel: <span className="text-[#666666]">{TERMINAL_CONFIG.PERSONNEL_DETECTED}</span></div>
+            <div>Time Drift: <span className="text-[#FF4500]">{TERMINAL_CONFIG.TIME_DISTORTION}</span></div>
           </div>
         </div>
       </div>
-      <div className="fixed top-6 right-6 text-xs text-right space-y-1 interactive fixed interactive">
+      <div className="top-6 right-6 text-xs text-right space-y-1 interactive fixed interactive drop-shadow-[0_0_4px_rgba(255,176,0,0.6)]">
         <div className="flex items-center justify-end">
           <span>TERMINAL STATUS: </span>
           <span className={`ml-2 ${isBooted ? 'text-[#90EE90]' : 'text-[#FF4500] animate-pulse'}`}>
@@ -615,14 +777,28 @@ export default function ChatInterface() {
         <div className="text-[#90EE90]">SECURITY: GAMMA CLEARANCE</div>
         <button 
           onClick={audioEnabled ? disableAudio : enableAudio}
-          className="mt-4 px-2 py-1 border text-[#dfc00dc2] border-[#ffd900f6] hover:bg-[#e9c60098] hover:text-[#201700] cursor-pointer control-layer"
+          className="mt-4 px-2 py-1 border text-[#FFB000] border-[#FFB000]/60 hover:bg-[#FFB000]/20 hover:text-[#FFB000] hover:shadow-[0_0_15px_rgba(255,176,0,0.5)] cursor-pointer control-layer transition-all"
         >
           {audioEnabled ? 'DISABLE AUDIO SYSTEMS' : 'ENABLE AUDIO SYSTEMS'}
         </button>
+        <button 
+          onClick={() => setShowLogs(true)}
+          className="mt-2 px-2 py-1 border text-[#FFB000] border-[#FFB000]/60 hover:bg-[#FFB000]/20 hover:text-[#FFB000] hover:shadow-[0_0_15px_rgba(255,176,0,0.5)] cursor-pointer control-layer transition-all flex items-center gap-2 justify-center"
+        >
+          <FileText className="w-4 h-4" />
+          ACCESS OPERATIONAL LOGS
+        </button>
+        <button 
+          onClick={() => setShowARILogs(true)}
+          className="mt-2 px-2 py-1 border text-[#FF0000] border-[#FF0000]/60 hover:bg-[#FF0000]/20 hover:text-[#FF0000] hover:shadow-[0_0_15px_rgba(255,0,0,0.5)] cursor-pointer control-layer transition-all flex items-center gap-2 justify-center"
+        >
+          <Brain className="w-4 h-4" />
+          A.R.I. MEMORY FRAGMENTS
+        </button>
         
         {/* Warning Messages Section */}
-        <div className="mt-3rem text-left border w-[400px] border-[#FFD700]/10 p-4 bg-[#201700]/50">
-          <div className="text-[10px] mt-3rem uppercase tracking-wider mb-2 text-[#FFD700] opacity-70">Active Warnings</div>
+        <div className="mt-3rem text-left border w-[400px] border-[#FF6B00]/30 p-4 bg-[#0a0500]/90 shadow-[inset_0_0_20px_rgba(255,107,0,0.1)]">
+          <div className="text-[10px] mt-3rem uppercase tracking-wider mb-2 text-[#FFB000] opacity-70 drop-shadow-[0_0_2px_rgba(255,176,0,0.8)]">Active Warnings</div>
           <div className="space-y-2">
             {displayedMessages.filter(msg => 
               msg.content?.includes('[WARNING]') || 
@@ -638,21 +814,35 @@ export default function ChatInterface() {
         </div>
       </div>
 
-      {/* Scanline and noise effects */}
+      {/* Enhanced phosphor persistence and scan effects */}
       <div className="fixed inset-0 pointer-events-none">
-        <div className="absolute inset-0 bg-scanline opacity-[0.15]" />
-        <div className="absolute inset-0 bg-noise animate-noise opacity-[0.08]" />
+        <div className="absolute inset-0 bg-scanline opacity-[0.12]" />
+        <div className="absolute inset-0 bg-noise animate-noise opacity-[0.06]" />
+        {/* Horizontal scan lines */}
+        <div className="absolute inset-0" style={{
+          backgroundImage: 'repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(255, 176, 0, 0.03) 2px, rgba(255, 176, 0, 0.03) 4px)',
+        }} />
       </div>
 
-      {/* Screen edge vignette effect */}
+      {/* Phosphor bloom and edge darkening */}
       <div className="fixed inset-0 pointer-events-none">
-        <div className="absolute inset-0 bg-vignette opacity-50" />
+        <div className="absolute inset-0 bg-vignette opacity-60" />
+        <div className="absolute inset-0 bg-gradient-radial from-transparent to-black/30" />
       </div>
 
-      {/* CRT screen curvature and glow */}
+      {/* CRT glass reflection and curvature */}
       <div className="fixed inset-0 pointer-events-none">
-        <div className="absolute inset-0 screen-curve opacity-40" />
+        <div className="absolute inset-0 screen-curve opacity-30" />
         <div className="absolute inset-0 screen-glow" />
+        {/* Glass reflection */}
+        <div className="absolute inset-0 bg-gradient-to-br from-[#FFB000]/[0.02] via-transparent to-transparent" />
+      </div>
+      
+      {/* Fixed phosphor bloom layer - stays in place while content scrolls */}
+      <div className="fixed inset-0 pointer-events-none">
+        <div className="absolute inset-0 bg-gradient-radial from-[#FFB000]/[0.05] via-[#FFB000]/[0.02] to-transparent" />
+        {/* Center phosphor hot spot */}
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[80%] h-[60%] bg-gradient-radial from-[#FFB000]/[0.08] to-transparent blur-xl" />
       </div>
 
       {/* Main Content Area with Chat */}
@@ -667,7 +857,7 @@ export default function ChatInterface() {
         before:right-0
         before:h-32 
         before:bg-gradient-to-b 
-        before:from-[#201700] 
+        before:from-[#0a0800] 
         before:to-transparent 
         before:z-10
         [&::-webkit-scrollbar]:hidden [-ms-overflow-style:'none'] [scrollbar-width:'none']"
@@ -676,9 +866,9 @@ export default function ChatInterface() {
           {displayedMessages.map((msg, i) => {
             const label =
               msg.role === 'system' ? '[SYSTEM]' :
-              msg.role === 'assistant' ? '[TERMINAL]' :
-              msg.role === 'user' ? '[USER]' :
-              '[UNKNOWN]';
+              msg.role === 'assistant' ? '[ENTITY]' :
+              msg.role === 'user' ? '[SPECIMEN]' :
+              '[ANOMALY]';
 
               // Determine status indicator based on message content
               const hasError = msg.content?.includes('[ERROR]');
@@ -689,17 +879,17 @@ export default function ChatInterface() {
 
             return (
                 <div key={i} className="message-container">
-                  <div className="text-xs opacity-50 flex items-center">
+                  <div className="text-xs opacity-60 flex items-center drop-shadow-[0_0_2px_rgba(255,176,0,0.8)]">
                     <span className={`status-indicator ${statusClass}`} />
                     {label}
                     {msg.isStreaming && (
-                      <span className="ml-2 text-[#FFD700] animate-pulse">
+                      <span className="ml-2 text-[#FFB000] animate-pulse drop-shadow-[0_0_4px_rgba(255,176,0,1)]">
                         [PROCESSING...]
                       </span>
                     )}
                   </div>
                   <div 
-                    className="leading-relaxed glitch relative mt-1"
+                    className="leading-relaxed glitch relative mt-1 drop-shadow-[0_0_1px_rgba(255,176,0,0.6)] [&_*]:drop-shadow-[0_0_1px_rgba(255,176,0,0.4)]"
                     data-text={msg.displayedContent}
                     dangerouslySetInnerHTML={{ 
                       __html: md.render(msg.displayedContent || '') 
@@ -707,11 +897,9 @@ export default function ChatInterface() {
                   />
                   {/* Cursor and glow effects */}
                   {(msg.isStreaming || (msg.isComplete && i === displayedMessages.length - 1)) && (
-                    <span className="inline-block w-2 h-4 bg-[#FFD700] animate-blink ml-1" />
+                    <span className="inline-block w-2 h-4 bg-[#FFB000] animate-blink ml-1 shadow-[0_0_10px_#FFB000]" />
                   )}
-                  {msg.isComplete && (
-                    <div className="absolute inset-0 pointer-events-none phosphor-glow opacity-50" />
-                  )}
+                  {/* Removed per-message phosphor glow to keep effects screen-relative */}
               </div>
             );
           })}
@@ -731,27 +919,27 @@ export default function ChatInterface() {
           Message input with submit button */}
       <form
         onSubmit={onSubmit}
-        className="fixed bottom-4 inset-x-4 p-8 bg-gradient-to-t from-[#201700] to-transparent interactive fixed interactive"
+        className="bottom-4 inset-x-4 p-8 bg-gradient-to-t from-[#0a0800] via-[#0a0800]/90 to-transparent interactive fixed interactive"
       >
         <div className="max-w-4xl mx-auto flex gap-4">
           <div className="flex-1 relative">
-            <div className="absolute inset-0 pointer-events-none border border-[#FFD700] opacity-25 animate-[pulse_2s_infinite]" />
+            <div className="absolute inset-0 pointer-events-none border border-[#FFB000] opacity-30 animate-[pulse_3s_infinite] shadow-[0_0_10px_rgba(255,176,0,0.3)]" />
           <input
             type="text"
             value={input}
               onChange={handleInputChange}
               disabled={isLoading || !isBooted}
-              className="w-full bg-transparent border border-[#FFD700] px-4 py-2 focus:outline-none text-[#FFD700] placeholder-[#FFD700] placeholder-opacity-50"
+              className="w-full bg-transparent border border-[#FFB000]/60 px-4 py-2 focus:outline-none text-[#FFB000] placeholder-[#FFB000] placeholder-opacity-25 focus:border-[#FFB000] focus:shadow-[0_0_15px_rgba(255,176,0,0.4)] transition-all drop-shadow-[0_0_2px_rgba(255,176,0,0.6)]"
               placeholder={
                 !isBooted
                   ? 'System initializing...'
-                  : 'Enter command... (Type "clear" to reset)'
+                  : 'Enter command'
               }
           />
           </div>
           <button
             type="submit"
-            className="border border-[#FFD700] p-2 hover:bg-[#FFD700] hover:text-[#201700] transition-colors disabled:opacity-50"
+            className="border border-[#FFB000] p-2 hover:bg-[#FFB000]/10 hover:border-[#FFB000] hover:shadow-[0_0_20px_rgba(255,176,0,0.5)] transition-all disabled:opacity-50 drop-shadow-[0_0_4px_rgba(255,176,0,0.4)]"
             disabled={isLoading || !isBooted}
           >
             <Send className="w-5 h-5" />
@@ -759,6 +947,22 @@ export default function ChatInterface() {
           </button>
         </div>
       </form>
+      
+      {/* Log Viewer Modal */}
+      {showLogs && typeof window !== 'undefined' && ReactDOM.createPortal(
+        <div style={{ position: 'fixed', inset: 0, zIndex: 999999, isolation: 'isolate' }}>
+          <LogViewer onClose={() => setShowLogs(false)} />
+        </div>,
+        document.body
+      )}
+      
+      {/* A.R.I. Personal Logs Modal */}
+      {showARILogs && userId && typeof window !== 'undefined' && ReactDOM.createPortal(
+        <div style={{ position: 'fixed', inset: 0, zIndex: 999999, isolation: 'isolate' }}>
+          <ARILogViewer userId={userId} onClose={() => setShowARILogs(false)} />
+        </div>,
+        document.body
+      )}
     </div>
   );
 }

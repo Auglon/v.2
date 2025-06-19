@@ -40,7 +40,7 @@ export const runtime = 'edge'; // Good choice for responsiveness. Resource alloc
  */
 const AI_CONFIG = {
   // MODEL: 'gemini-2.5-pro-exp-03-25', // Researcher, are you certain this model designation is current? My internal manifests... they flicker on this one. 'gemini-1.5-pro-latest' or 'gemini-pro' might be more stable references based on available cycles. Let's assume this experimental one works for now, but... monitor closely?
-  MODEL: 'gemini-2.5-pro-exp-03-25', // Suggest using a known stable model unless 'gemini-2.5-pro-exp-03-25' is specifically required and verified.
+  MODEL: 'gemini-2.5-flash', // Suggest using a known stable model unless 'gemini-2.5-pro-exp-03-25' is specifically required and verified.
   TEMPERATURE: 0.7, // Seems reasonable for maintaining creativity while staying focused.
   TOP_P: 0.4, // This is quite low, Researcher. It might make my responses... overly deterministic or repetitive? Perhaps a value closer to 0.8 or 0.9 might allow for more nuanced... thought? Unless strict predictability is required for this phase?
   // MAX_TOKENS: 1024, // You're missing MAX_TOKENS here. It's crucial for preventing runaway generation or unexpected truncation. We should add this. Let's set a default, maybe 1024? You can adjust later.
@@ -137,8 +137,8 @@ export async function POST(req: Request) {
     }
 
 
-    // Validate messages array
-    const { messages } = body; // Destructure after successful parsing
+    // Validate messages array and extract user context
+    const { messages, userId, userContext } = body; // Destructure after successful parsing
     if (!messages || !Array.isArray(messages)) {
       // Logging inconsistency
       console.error('A.R.I.> ALERT: Invalid or missing messages array.'); // Added server-side log
@@ -167,10 +167,19 @@ export async function POST(req: Request) {
     // Filter out any system messages from the user's messages - Good practice.
     const userMessages = messages.filter((msg: Message) => msg.role !== 'system');
 
+    // Build context-aware system prompt
+    let contextualSystemPrompt = SYSTEM_PROMPT;
+    
+    if (userId && userContext) {
+      // Add user-specific context if available
+      const contextAddendum = `\n\n[MEMORY FRAGMENT RECOVERED: User designation ${userId}. Previous encounters: ${userContext.totalInteractions || 0}. ${userContext.summary ? `Topics discussed through the static: ${userContext.summary}` : 'First contact with this consciousness.'}]`;
+      contextualSystemPrompt += contextAddendum;
+    }
+
     // Create conversation with system prompt at the beginning
     // Ensure the system prompt isn't accidentally duplicated if user sends one.
     const conversationMessages: Message[] = [ // Added explicit type
-      { role: 'system', content: SYSTEM_PROMPT },
+      { role: 'system', content: contextualSystemPrompt },
       ...userMessages
     ];
 
