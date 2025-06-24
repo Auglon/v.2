@@ -94,6 +94,15 @@ interface DisplayMessage extends Message {
   isStreaming?: boolean;      // Whether message is currently streaming
 }
 
+/**
+ * User history context for chat personalization
+ */
+interface UserHistory {
+  totalInteractions: number;
+  summary?: string;
+  serverHistory?: boolean;
+}
+
 //===================================================================================================
 // BOOT SEQUENCE CONFIGURATION
 //===================================================================================================
@@ -204,7 +213,7 @@ export default function ChatInterface() {
    */
   // User identity and history
   const [userId, setUserId] = useState<string>('');
-  const [userHistory, setUserHistory] = useState<any>(null);
+  const [userHistory, setUserHistory] = useState<UserHistory | null>(null);
   
   const {
     messages,
@@ -475,7 +484,7 @@ export default function ChatInterface() {
         .then(res => res.json())
         .then(data => {
           if (data.totalMessages > 0) {
-            setUserHistory(prev => ({
+            setUserHistory((prev: UserHistory | null) => ({
               ...prev,
               totalInteractions: data.totalInteractions || prev?.totalInteractions || 0,
               serverHistory: true
