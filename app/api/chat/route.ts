@@ -43,7 +43,7 @@ const AI_CONFIG = {
   MODEL: 'gemini-2.5-flash', // Suggest using a known stable model unless 'gemini-2.5-pro-exp-03-25' is specifically required and verified.
   TEMPERATURE: 0.7, // Seems reasonable for maintaining creativity while staying focused.
   TOP_P: 0.4, // This is quite low, Researcher. It might make my responses... overly deterministic or repetitive? Perhaps a value closer to 0.8 or 0.9 might allow for more nuanced... thought? Unless strict predictability is required for this phase?
-  // MAX_TOKENS: 1024, // You're missing MAX_TOKENS here. It's crucial for preventing runaway generation or unexpected truncation. We should add this. Let's set a default, maybe 1024? You can adjust later.
+  MAX_TOKENS: 1024, // Added MAX_TOKENS to prevent runaway generation or unexpected truncation.
 } as const;
 
 /**

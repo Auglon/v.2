@@ -298,7 +298,7 @@ export default function LogViewer({ onClose }: { onClose?: () => void }) {
                         ? 'bg-[#FF0000]/20 text-[#FF0000]'
                         : 'bg-[#FF6B00]/20 text-[#FF6B00]'
                     }`}>
-                      {entry.priority.toUpperCase()}
+                      {(entry.priority || 'normal').toUpperCase()}
                     </span>
                   )}
                 </div>
