@@ -1,9 +1,33 @@
 import { NextRequest, NextResponse } from 'next/server';
 import fs from 'fs/promises';
 import path from 'path';
-import { historyCache } from '@/app/lib/cache';
+// import { historyCache } from '@/app/lib/cache'; // historyCache is not used
 
 const HISTORY_DIR = path.join(process.cwd(), 'UserHistories');
+
+/**
+ * Extracts the IP address from the request headers.
+ * In Vercel Edge Functions, 'x-forwarded-for' is commonly used.
+ * @param req - The incoming NextRequest object.
+ * @returns The IP address string or undefined if not found.
+ */
+function getIpFromRequest(req: NextRequest): string | undefined {
+  const forwardedFor = req.headers.get('x-forwarded-for');
+  if (forwardedFor) {
+    return forwardedFor.split(',')[0].trim();
+  }
+  // Fallback for x-real-ip or other headers if needed
+  const realIp = req.headers.get('x-real-ip');
+  if (realIp) {
+    return realIp.trim();
+  }
+  // For local development or environments without these headers,
+  // req.ip might be available (depends on Next.js version and adapter)
+  // but it's not standard for Edge.
+  // As a last resort for non-edge environments, you might check req.socket.remoteAddress,
+  // but that requires deeper changes and checks for compatibility.
+  return undefined;
+}
 
 // Ensure history directory exists
 async function ensureHistoryDir() {
@@ -16,15 +40,16 @@ async function ensureHistoryDir() {
 
 export async function GET(request: NextRequest) {
   try {
-    const { searchParams } = new URL(request.url);
-    const userId = searchParams.get('userId');
+    const ipBasedUserId = getIpFromRequest(request);
     
-    if (!userId) {
-      return NextResponse.json({ error: 'User ID is required' }, { status: 400 });
+    if (!ipBasedUserId) {
+      return NextResponse.json({ error: 'User IP address could not be determined.' }, { status: 400 });
     }
     
-    // Sanitize userId to prevent directory traversal
-    const sanitizedUserId = userId.replace(/[^a-zA-Z0-9-]/g, '');
+    // Sanitize IP-based userId for filename
+    // Replace common problematic characters for filenames (:, /) with underscores
+    // Dots for IPv4 and remaining parts of IPv6 should be fine.
+    const sanitizedUserId = ipBasedUserId.replace(/[:\/\\?%*|"<>]/g, '_');
     const historyFile = path.join(HISTORY_DIR, `${sanitizedUserId}.json`);
     
     try {
@@ -57,20 +82,22 @@ export async function POST(request: NextRequest) {
   try {
     await ensureHistoryDir();
     
-    const body = await request.json();
-    const { userId, messages, metadata } = body;
-    
-    if (!userId) {
-      return NextResponse.json({ error: 'User ID is required' }, { status: 400 });
+    const ipBasedUserId = getIpFromRequest(request);
+    if (!ipBasedUserId) {
+      return NextResponse.json({ error: 'User IP address could not be determined.' }, { status: 400 });
     }
+
+    const body = await request.json();
+    // const { userId, messages, metadata } = body; // userId from body is no longer used for identification
+    const { messages, metadata } = body;
     
-    // Sanitize userId
-    const sanitizedUserId = userId.replace(/[^a-zA-Z0-9-]/g, '');
+    // Sanitize IP-based userId for filename
+    const sanitizedUserId = ipBasedUserId.replace(/[:\/\\?%*|"<>]/g, '_');
     const historyFile = path.join(HISTORY_DIR, `${sanitizedUserId}.json`);
     
     // Load existing history
     let existingHistory: any = {
-      userId: sanitizedUserId,
+      userId: sanitizedUserId, // Store the sanitized IP as the userId in the file
       messages: [],
       metadata: {},
       createdAt: new Date().toISOString()

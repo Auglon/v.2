@@ -138,12 +138,17 @@ export async function POST(req: Request) {
 
 
     // Validate messages array and extract user context
-    const { messages, userId, userContext } = body; // Destructure after successful parsing
+    const { messages, userContext } = body; // Destructure after successful parsing
+    // const { messages, userId, userContext } = body; // Original line, userId from body is no longer primary
     if (!messages || !Array.isArray(messages)) {
       // Logging inconsistency
       console.error('A.R.I.> ALERT: Invalid or missing messages array.'); // Added server-side log
       return createErrorResponse('Messages array is required and must be an array', 400);
     }
+
+    // Get User IP from request headers
+    const ip = getIpFromRequest(req);
+    const effectiveUserId = ip || 'unknown-ip-chat'; // Use IP as user ID, fallback if necessary
 
     //===================================================================================================
     // AI MODEL INITIALIZATION
@@ -170,9 +175,13 @@ export async function POST(req: Request) {
     // Build context-aware system prompt
     let contextualSystemPrompt = SYSTEM_PROMPT;
     
-    if (userId && userContext) {
-      // Add user-specific context if available
-      const contextAddendum = `\n\n[MEMORY FRAGMENT RECOVERED: User designation ${userId}. Previous encounters: ${userContext.totalInteractions || 0}. ${userContext.summary ? `Topics discussed through the static: ${userContext.summary}` : 'First contact with this consciousness.'}]`;
+    // Add user-specific context if available, using the effectiveUserId (IP Address)
+    if (userContext) { // userContext might contain info keyed by the old client-side ID.
+                      // For now, we'll use the IP for new context.
+      const contextAddendum = `\n\n[MEMORY FRAGMENT RECOVERED: User designation ${effectiveUserId}. Previous encounters: ${userContext.totalInteractions || 0}. ${userContext.summary ? `Topics discussed through the static: ${userContext.summary}` : 'First contact with this consciousness.'}]`;
+      contextualSystemPrompt += contextAddendum;
+    } else {
+      const contextAddendum = `\n\n[SYSTEM LOG: New connection established. User designation: ${effectiveUserId}.]`;
       contextualSystemPrompt += contextAddendum;
     }
 
@@ -240,6 +249,26 @@ export async function POST(req: Request) {
 //===================================================================================================
 // UTILITY FUNCTIONS
 //===================================================================================================
+
+/**
+ * Extracts the IP address from the request headers.
+ * In Vercel Edge Functions, 'x-forwarded-for' is commonly used.
+ * @param req - The incoming Request object.
+ * @returns The IP address string or undefined if not found.
+ */
+function getIpFromRequest(req: Request): string | undefined {
+  const forwardedFor = req.headers.get('x-forwarded-for');
+  if (forwardedFor) {
+    // x-forwarded-for can be a comma-separated list of IPs. The first one is usually the client's IP.
+    return forwardedFor.split(',')[0].trim();
+  }
+  // Fallback for other potential IP headers if needed, though x-forwarded-for is standard on Vercel.
+  // const realIp = req.headers.get('x-real-ip');
+  // if (realIp) {
+  //   return realIp.trim();
+  // }
+  return undefined;
+}
 
 /**
  * Creates a standardized error response

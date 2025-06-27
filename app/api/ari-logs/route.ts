@@ -5,6 +5,24 @@ import { createARILogEntry, generateARINotes, formatARILog, type ARILogEntry, ty
 
 const ARI_LOGS_DIR = path.join(process.cwd(), 'ARILogs');
 
+/**
+ * Extracts the IP address from the request headers.
+ * In Vercel Edge Functions, 'x-forwarded-for' is commonly used.
+ * @param req - The incoming NextRequest object.
+ * @returns The IP address string or undefined if not found.
+ */
+function getIpFromRequest(req: NextRequest): string | undefined {
+  const forwardedFor = req.headers.get('x-forwarded-for');
+  if (forwardedFor) {
+    return forwardedFor.split(',')[0].trim();
+  }
+  const realIp = req.headers.get('x-real-ip'); // Fallback
+  if (realIp) {
+    return realIp.trim();
+  }
+  return undefined;
+}
+
 // Ensure ARI logs directory exists
 async function ensureARILogsDir() {
   try {
@@ -16,17 +34,16 @@ async function ensureARILogsDir() {
 
 export async function GET(request: NextRequest) {
   try {
-    const { searchParams } = new URL(request.url);
-    const userId = searchParams.get('userId');
+    const ipBasedUserId = getIpFromRequest(request);
     
-    if (!userId) {
-      return NextResponse.json({ error: 'User ID is required' }, { status: 400 });
+    if (!ipBasedUserId) {
+      return NextResponse.json({ error: 'User IP address could not be determined.' }, { status: 400 });
     }
     
     await ensureARILogsDir();
     
-    // Sanitize userId
-    const sanitizedUserId = userId.replace(/[^a-zA-Z0-9-]/g, '');
+    // Sanitize IP-based userId for filename
+    const sanitizedUserId = ipBasedUserId.replace(/[:\/\\?%*|"<>]/g, '_');
     const logFile = path.join(ARI_LOGS_DIR, `${sanitizedUserId}.json`);
     
     try {
@@ -56,15 +73,21 @@ export async function POST(request: NextRequest) {
   try {
     await ensureARILogsDir();
     
+    const ipBasedUserId = getIpFromRequest(request);
+    if (!ipBasedUserId) {
+      return NextResponse.json({ error: 'User IP address could not be determined.' }, { status: 400 });
+    }
+
     const body = await request.json();
-    const { userId, messages } = body;
+    // const { userId, messages } = body; // userId from body is no longer used
+    const { messages } = body;
     
-    if (!userId || !messages) {
-      return NextResponse.json({ error: 'User ID and messages are required' }, { status: 400 });
+    if (!messages) { // Only messages is needed from body now
+      return NextResponse.json({ error: 'Messages are required' }, { status: 400 });
     }
     
-    // Sanitize userId
-    const sanitizedUserId = userId.replace(/[^a-zA-Z0-9-]/g, '');
+    // Sanitize IP-based userId for filename
+    const sanitizedUserId = ipBasedUserId.replace(/[:\/\\?%*|"<>]/g, '_');
     const logFile = path.join(ARI_LOGS_DIR, `${sanitizedUserId}.json`);
     
     // Load existing logs
