@@ -149,6 +149,7 @@ export async function POST(req: Request) {
     // Get User IP from request headers
     const ip = getIpFromRequest(req);
     const effectiveUserId = ip || 'unknown-ip-chat'; // Use IP as user ID, fallback if necessary
+    console.log(`A.R.I.> [CHAT_API] Request received. User IP (effectiveUserId): ${effectiveUserId}`);
 
     //===================================================================================================
     // AI MODEL INITIALIZATION
@@ -157,13 +158,15 @@ export async function POST(req: Request) {
     // Initialize the model using the Vercel AI SDK with Google provider
     // The google() function should ideally throw if the model name is invalid or inaccessible.
     // The `if (!model)` check might be redundant, but harmless. Defensive programming is... sensible.
+    console.log(`A.R.I.> [CHAT_API] Initializing AI model: ${AI_CONFIG.MODEL}`);
     const model = google(AI_CONFIG.MODEL);
 
     if (!model) {
       // This case *might* not be reachable if google() throws, but better safe than... corrupted.
-      console.error(`A.R.I.> CRITICAL: Failed to initialize AI model: ${AI_CONFIG.MODEL}. Potential core linkage failure?`);
+      console.error(`A.R.I.> CRITICAL: [CHAT_API] Failed to initialize AI model: ${AI_CONFIG.MODEL}. Potential core linkage failure?`);
       throw new Error('Failed to initialize AI model'); // Let the main catch handle this
     }
+    console.log(`A.R.I.> [CHAT_API] AI Model initialized successfully.`);
 
     //===================================================================================================
     // MESSAGE PROCESSING
@@ -197,12 +200,17 @@ export async function POST(req: Request) {
     //===================================================================================================
 
     // Create a text stream using the Vercel AI SDK
+    console.log(`A.R.I.> [CHAT_API] Attempting to stream text with AI. Conversation length: ${conversationMessages.length} messages. First user message: ${userMessages[0]?.content.substring(0,50)}...`);
     const response = await streamText({
       model,
       messages: conversationMessages,
       temperature: AI_CONFIG.TEMPERATURE,
       topP: AI_CONFIG.TOP_P,
+      // Note: MAX_TOKENS is part of AI_CONFIG but not directly passed to streamText here.
+      // The SDK might pick it up from the model configuration or it might need to be explicitly passed.
+      // For now, assuming the SDK handles it or the model has a default.
     });
+    console.log(`A.R.I.> [CHAT_API] streamText call completed. Response object received.`);
 
     // --- Analysis of TransformStream ---
     // Researcher, this transformation logic... I think it might be causing redundant prefixes.
@@ -215,21 +223,33 @@ export async function POST(req: Request) {
     // Let's adjust this. We just need to format the chunk for the UI, not alter the content itself.
 
     const transformedStream = new TransformStream({
+      start(controller) {
+        console.log('A.R.I.> [CHAT_API] TransformStream started.');
+      },
       transform(chunk, controller) {
         // Directly format the chunk received from the AI for the UI library
-        const formattedData = formatDataStreamPart('text', chunk);
-        controller.enqueue(formattedData);
+        console.log('A.R.I.> [CHAT_API] TransformStream: Received chunk from AI.');
+        try {
+          const formattedData = formatDataStreamPart('text', chunk);
+          controller.enqueue(formattedData);
+          console.log('A.R.I.> [CHAT_API] TransformStream: Enqueued formatted chunk to client.');
+        } catch (e) {
+          console.error('A.R.I.> [CHAT_API] TransformStream: Error formatting or enqueuing chunk:', e);
+          controller.error(e);
+        }
       },
-      // We should also handle potential stream errors here, just in case.
       flush(controller) {
         // Optional: Clean up resources if needed, though likely not required here.
+        console.log('A.R.I.> [CHAT_API] TransformStream flushed.');
       }
     });
 
     // Pipe through the adjusted transform stream
+    console.log('A.R.I.> [CHAT_API] Piping AI response textStream through transformStream.');
     const readableStream = response.textStream.pipeThrough(transformedStream);
 
     // Return the transformed stream
+    console.log('A.R.I.> [CHAT_API] Returning readableStream to client.');
     return new Response(readableStream, {
       headers: {
         'Content-Type': 'text/event-stream', // Correct MIME type for SSE

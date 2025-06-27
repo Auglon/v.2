@@ -222,16 +222,21 @@ export default function ChatInterface() {
       userContext: userHistory
     },
     onResponse: (response) => {
+      console.log('[ChatInterface] onResponse triggered. Status:', response.status);
       if (!response.ok) {
-        console.error('Chat API Error:', response.status, response.statusText);
+        console.error('[ChatInterface] Chat API Error:', response.status, response.statusText);
+        response.text().then(text => console.error('[ChatInterface] Error response body:', text));
         addNewDisplayedMessage({
           role: 'system',
           content: `[ERROR] Server responded with status ${response.status}: ${response.statusText}`,
           isComplete: true,
         });
+      } else {
+        console.log('[ChatInterface] Chat API response OK. Stream should begin.');
       }
     },
     onFinish: (message) => {
+      console.log('[ChatInterface] onFinish triggered for message:', message);
       setDisplayedMessages((prev) => {
         const updated = [...prev];
         const msgIdx = updated.findIndex((m) => m.id === message.id);
@@ -263,7 +268,7 @@ export default function ChatInterface() {
       }
     },
     onError: (error) => {
-      console.error('Chat error:', error);
+      console.error('[ChatInterface] onError triggered:', error);
       addNewDisplayedMessage({
         role: 'system',
         content: `[ERROR] ${error.message || 'An unknown error occurred'}`,
@@ -695,19 +700,24 @@ export default function ChatInterface() {
     const trimmed = input.trim();
     if (!trimmed) return;
 
+    console.log('[ChatInterface] onSubmit called. Input:', trimmed);
+
     if (trimmed.toLowerCase() === 'clear') {
       setDisplayedMessages([]);
       handleInputChange({ target: { value: '' } } as any);
+      console.log('[ChatInterface] Cleared messages.');
       return;
     }
 
     try {
+      console.log('[ChatInterface] Calling handleSubmit from useChat.');
       await handleSubmit(e);
+      console.log('[ChatInterface] handleSubmit call completed.');
     } catch (error) {
-      console.error('Error submitting message:', error);
+      console.error('[ChatInterface] Error in onSubmit try-catch (around handleSubmit):', error);
       addNewDisplayedMessage({
         role: 'system',
-        content: `[ERROR] Failed to send message: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        content: `[ERROR] Client-side error submitting message: ${error instanceof Error ? error.message : 'Unknown error'}`,
         isComplete: true,
       });
     }
