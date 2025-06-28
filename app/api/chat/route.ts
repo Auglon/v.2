@@ -350,7 +350,7 @@ export async function POST(req: Request) {
           console.error('A.R.I.> [CHAT_API] TransformStream: Error during format/enqueue:', e);
           // controller.error(e); // It seems the stream might be erroring out higher up if this is the cause
                                // Let's log the error but not necessarily call controller.error yet,
-   
+        }
       },
       flush(controller) {
         // Optional: Clean up resources if needed, though likely not required here.
