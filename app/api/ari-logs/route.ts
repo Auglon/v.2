@@ -3,7 +3,8 @@ import fs from 'fs/promises';
 import path from 'path';
 import { createARILogEntry, generateARINotes, formatARILog, type ARILogEntry, type UserARILog } from '@/app/lib/ariLogger';
 
-const ARI_LOGS_DIR = path.join(process.cwd(), 'ARILogs');
+// Use /tmp directory for writable filesystem access in Vercel Serverless Functions
+const ARI_LOGS_DIR = path.join('/tmp', 'ARILogs');
 
 /**
  * Extracts the IP address from the request headers.

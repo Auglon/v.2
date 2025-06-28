@@ -3,7 +3,8 @@ import fs from 'fs/promises';
 import path from 'path';
 // import { historyCache } from '@/app/lib/cache'; // historyCache is not used
 
-const HISTORY_DIR = path.join(process.cwd(), 'UserHistories');
+// Use /tmp directory for writable filesystem access in Vercel Serverless Functions
+const HISTORY_DIR = path.join('/tmp', 'UserHistories');
 
 /**
  * Extracts the IP address from the request headers.
