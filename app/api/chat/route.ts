@@ -322,8 +322,7 @@ export async function POST(req: Request) {
       transform(chunk, controller) {
         // Directly format the chunk received from the AI for the UI library
         console.log('A.R.I.> [CHAT_API] TransformStream: Received chunk from AI.');
-     
-        
+
         // Detailed chunk inspection
         console.log(`A.R.I.> [CHAT_API] Chunk typeof: ${typeof chunk}`);
         if (chunk instanceof Uint8Array) {
@@ -348,8 +347,7 @@ export async function POST(req: Request) {
           console.log('A.R.I.> [CHAT_API] TransformStream: Enqueued formatted chunk to client.');
         } catch (e) {
           console.error('A.R.I.> [CHAT_API] TransformStream: Error during format/enqueue:', e);
-          // controller.error(e); // It seems the stream might be erroring out higher up if this is the cause
-                               // Let's log the error but not necessarily call controller.error yet,
+          controller.error(e); // Terminate the stream explicitly if our processing fails.
         }
       },
       flush(controller) {
