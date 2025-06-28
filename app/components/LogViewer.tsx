@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
-import { ChevronLeft, ChevronRight, Calendar, Search, AlertTriangle, Users, Wrench, FileText } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Calendar, Search, AlertTriangle, Users, Wrench, FileText, X, ZoomIn } from 'lucide-react';
 
 interface LogEntry {
   id: string;
@@ -39,6 +39,34 @@ const DEPT_ICONS: Record<string, React.ReactNode> = {
   'Engineering': <Wrench className="w-3 h-3" />
 };
 
+// Image Modal Component
+function ImageModal({ src, alt, onClose }: { src: string; alt: string; onClose: () => void }) {
+  return (
+    <div 
+      className="fixed inset-0 z-[100000] flex items-center justify-center p-4"
+      onClick={onClose}
+      style={{ pointerEvents: 'auto' }}
+    >
+      <div className="absolute inset-0 bg-black/90" />
+      <div className="relative max-w-[90vw] max-h-[90vh]">
+        <button
+          onClick={onClose}
+          className="absolute -top-10 right-0 text-[#FFB000] hover:text-[#FFB000]/70 transition-colors flex items-center gap-2"
+        >
+          <X className="w-5 h-5" />
+          <span>Close</span>
+        </button>
+        <img 
+          src={src} 
+          alt={alt} 
+          className="max-w-full max-h-[85vh] object-contain border-2 border-[#FFB000] shadow-[0_0_50px_rgba(255,176,0,0.5)]"
+          onClick={(e) => e.stopPropagation()}
+        />
+      </div>
+    </div>
+  );
+}
+
 export default function LogViewer({ onClose }: { onClose?: () => void }) {
   const [selectedFile, setSelectedFile] = useState<string>(LOG_FILES[0].filename);
   const [logs, setLogs] = useState<LogFile[]>([]);
@@ -46,6 +74,7 @@ export default function LogViewer({ onClose }: { onClose?: () => void }) {
   const [selectedDepartment, setSelectedDepartment] = useState<string>('all');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [enlargedImage, setEnlargedImage] = useState<{ src: string; alt: string } | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   // Parse log content
@@ -165,6 +194,53 @@ export default function LogViewer({ onClose }: { onClose?: () => void }) {
   const departments = Array.from(new Set(
     logs.flatMap(log => log.entries.map(e => e.department).filter(Boolean))
   ));
+
+  // Process content with enhanced image handling
+  const processContent = (content: string) => {
+    return content
+      .replace(/!\[([^\]]*)\]\(([^)]+)\)/g, (match, alt, src) => {
+        const decodedSrc = decodeURIComponent(src);
+        const uniqueId = Math.random().toString(36).substr(2, 9);
+        return `
+          <div class="image-container my-4 inline-block relative group cursor-pointer" data-image-id="${uniqueId}">
+            <img 
+              src="${decodedSrc}" 
+              alt="${alt}" 
+              class="image-thumbnail rounded-lg max-w-xs h-auto border-2 border-[#FFB000]/30 shadow-[0_0_20px_rgba(255,176,0,0.3)] transition-all group-hover:border-[#FFB000] group-hover:shadow-[0_0_30px_rgba(255,176,0,0.5)]"
+              data-full-src="${decodedSrc}"
+              data-alt="${alt}"
+            />
+            <div class="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity rounded-lg flex items-center justify-center">
+              <svg class="w-8 h-8 text-[#FFB000]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7"></path>
+              </svg>
+            </div>
+          </div>
+        `;
+      })
+      .replace(/\*([^*]+)\*/g, '<em class="text-[#FFB000]/60">$1</em>')
+      .replace(/\n/g, '<br />');
+  };
+
+  // Handle image click
+  useEffect(() => {
+    const handleImageClick = (e: MouseEvent) => {
+      const target = e.target as HTMLElement;
+      const container = target.closest('.image-container');
+      
+      if (container) {
+        const img = container.querySelector('img');
+        if (img) {
+          const src = img.getAttribute('data-full-src') || img.src;
+          const alt = img.getAttribute('data-alt') || img.alt;
+          setEnlargedImage({ src, alt });
+        }
+      }
+    };
+
+    document.addEventListener('click', handleImageClick);
+    return () => document.removeEventListener('click', handleImageClick);
+  }, []);
 
   return (
     <div className="fixed inset-0 z-[99999] flex items-center justify-center p-8" style={{ pointerEvents: 'auto', isolation: 'isolate' }}>
@@ -306,16 +382,7 @@ export default function LogViewer({ onClose }: { onClose?: () => void }) {
                 {/* Log content */}
                 <div 
                   className="text-[#FFB000]/80 text-sm leading-relaxed whitespace-pre-wrap prose prose-invert prose-amber max-w-none"
-                  dangerouslySetInnerHTML={{ 
-                    __html: entry.content
-                      .replace(/!\[([^\]]*)\]\(([^)]+)\)/g, (match, alt, src) => {
-                        // Decode URL-encoded paths
-                        const decodedSrc = decodeURIComponent(src);
-                        return `<img src="${decodedSrc}" alt="${alt}" class="rounded-lg my-4 max-w-full h-auto border-2 border-[#FFB000]/30 shadow-[0_0_20px_rgba(255,176,0,0.3)]" />`;
-                      })
-                      .replace(/\*([^*]+)\*/g, '<em class="text-[#FFB000]/60">$1</em>')
-                      .replace(/\n/g, '<br />')
-                  }}
+                  dangerouslySetInnerHTML={{ __html: processContent(entry.content) }}
                 />
               </div>
             ))
@@ -327,6 +394,15 @@ export default function LogViewer({ onClose }: { onClose?: () => void }) {
           UPSILON-7 LOG ARCHIVE • SECURE ACCESS ONLY • PROPERTY OF EREBUS CORP
         </div>
       </div>
+
+      {/* Image Modal */}
+      {enlargedImage && (
+        <ImageModal 
+          src={enlargedImage.src} 
+          alt={enlargedImage.alt} 
+          onClose={() => setEnlargedImage(null)} 
+        />
+      )}
 
       <style jsx>{`
         .custom-scrollbar::-webkit-scrollbar {
@@ -344,6 +420,12 @@ export default function LogViewer({ onClose }: { onClose?: () => void }) {
         
         .custom-scrollbar::-webkit-scrollbar-thumb:hover {
           background: rgba(255, 176, 0, 0.5);
+        }
+
+        .image-thumbnail {
+          max-width: 300px;
+          max-height: 200px;
+          object-fit: cover;
         }
       `}</style>
     </div>
