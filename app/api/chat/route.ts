@@ -322,14 +322,35 @@ export async function POST(req: Request) {
       transform(chunk, controller) {
         // Directly format the chunk received from the AI for the UI library
         console.log('A.R.I.> [CHAT_API] TransformStream: Received chunk from AI.');
+     
+        
+        // Detailed chunk inspection
+        console.log(`A.R.I.> [CHAT_API] Chunk typeof: ${typeof chunk}`);
+        if (chunk instanceof Uint8Array) {
+          try {
+            const decodedChunk = new TextDecoder().decode(chunk);
+            console.log(`A.R.I.> [CHAT_API] Chunk (decoded as UTF-8): "${decodedChunk}"`);
+          } catch (decodeError) {
+            console.error(`A.R.I.> [CHAT_API] Error decoding chunk:`, decodeError);
+            console.log(`A.R.I.> [CHAT_API] Chunk (raw Uint8Array):`, chunk);
+          }
+        } else if (typeof chunk === 'string') {
+          console.log(`A.R.I.> [CHAT_API] Chunk (string): "${chunk}"`);
+        } else {
+          console.log('A.R.I.> [CHAT_API] Chunk (other type):', chunk);
+        }
+
         try {
+          console.log('A.R.I.> [CHAT_API] TransformStream: Attempting to format chunk...');
           const formattedData = formatDataStreamPart('text', chunk);
+          console.log('A.R.I.> [CHAT_API] TransformStream: Chunk formatted. Attempting to enqueue...');
           controller.enqueue(formattedData);
           console.log('A.R.I.> [CHAT_API] TransformStream: Enqueued formatted chunk to client.');
         } catch (e) {
-          console.error('A.R.I.> [CHAT_API] TransformStream: Error formatting or enqueuing chunk:', e);
-          controller.error(e);
-        }
+          console.error('A.R.I.> [CHAT_API] TransformStream: Error during format/enqueue:', e);
+          // controller.error(e); // It seems the stream might be erroring out higher up if this is the cause
+                               // Let's log the error but not necessarily call controller.error yet,
+   
       },
       flush(controller) {
         // Optional: Clean up resources if needed, though likely not required here.
