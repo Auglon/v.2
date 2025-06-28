@@ -88,14 +88,20 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
+    console.log(`[API_HISTORY_POST] Received body:`, body);
+
     // const { userId, messages, metadata } = body; // userId from body is no longer used for identification
-    const { messages, metadata } = body;
+    const receivedMessages = Array.isArray(body.messages) ? body.messages : [];
+    const metadata = body.metadata || {};
     
+    console.log(`[API_HISTORY_POST] Effective User ID (IP): ${ipBasedUserId}, Received messages count: ${receivedMessages.length}`);
+
     // Sanitize IP-based userId for filename
     const sanitizedUserId = ipBasedUserId.replace(/[:\/\\?%*|"<>]/g, '_');
     const historyFile = path.join(HISTORY_DIR, `${sanitizedUserId}.json`);
     
     // Load existing history
+    console.log(`[API_HISTORY_POST] Reading existing history file: ${historyFile}`);
     let existingHistory: any = {
       userId: sanitizedUserId, // Store the sanitized IP as the userId in the file
       messages: [],
@@ -106,21 +112,31 @@ export async function POST(request: NextRequest) {
     try {
       const content = await fs.readFile(historyFile, 'utf-8');
       existingHistory = JSON.parse(content);
-    } catch {
-      // File doesn't exist yet
+      console.log(`[API_HISTORY_POST] Successfully read and parsed existing history. Messages count: ${existingHistory.messages?.length || 0}`);
+    } catch (readError: any) {
+      if (readError.code === 'ENOENT') {
+        console.log(`[API_HISTORY_POST] No existing history file found for ${sanitizedUserId}. Creating new history.`);
+      } else {
+        console.warn(`[API_HISTORY_POST] Error reading history file ${historyFile}, but proceeding to create new one:`, readError);
+      }
+      // File doesn't exist or unreadable, will create new one with default existingHistory
     }
     
     // Append new messages
+    console.log(`[API_HISTORY_POST] Preparing to update history. Current messages: ${existingHistory.messages?.length || 0}, New messages to add: ${receivedMessages.length}`);
     const updatedHistory = {
       ...existingHistory,
-      messages: [...(existingHistory.messages || []), ...messages].slice(-100), // Keep last 100
+      messages: [...(existingHistory.messages || []), ...receivedMessages].slice(-100), // Keep last 100
       metadata: { ...existingHistory.metadata, ...metadata },
       lastUpdated: new Date().toISOString(),
-      totalInteractions: (existingHistory.totalInteractions || 0) + messages.filter((m: any) => m.role === 'user').length
+      totalInteractions: (existingHistory.totalInteractions || 0) + receivedMessages.filter((m: any) => m.role === 'user').length
     };
+    console.log(`[API_HISTORY_POST] History updated. Total messages now: ${updatedHistory.messages.length}`);
     
     // Save to file
+    console.log(`[API_HISTORY_POST] Writing updated history to file: ${historyFile}`);
     await fs.writeFile(historyFile, JSON.stringify(updatedHistory, null, 2));
+    console.log(`[API_HISTORY_POST] Successfully wrote history to file for ${sanitizedUserId}.`);
     
     return NextResponse.json({ 
       success: true, 
@@ -128,7 +144,7 @@ export async function POST(request: NextRequest) {
       totalInteractions: updatedHistory.totalInteractions
     });
   } catch (error) {
-    console.error('Error saving history:', error);
-    return NextResponse.json({ error: 'Failed to save history' }, { status: 500 });
+    console.error('[API_HISTORY_POST] Critical error in POST handler:', error);
+    return NextResponse.json({ error: 'Failed to save history due to an internal server error.' }, { status: 500 });
   }
 }
