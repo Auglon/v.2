@@ -11,6 +11,7 @@
   },
   "dependencies": {
     "@ai-sdk/google": "^1.1.0",
+    "@elevenlabs/elevenlabs-js": "^2.5.0",
     "@radix-ui/react-primitive": "^2.0.1",
     "ai": "^4.1.0",
     "framer-motion": "^12.0.0",
@@ -38,4 +39,3 @@
     "typescript": "^5.7.3"
   }
 }
-

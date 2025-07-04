@@ -1,6 +1,7 @@
-import { Message, streamText } from 'ai';
+import { Message, streamText } from 'ai'; // Removed StreamingTextResponse
 import { google } from '@ai-sdk/google';
 import { formatDataStreamPart } from '@ai-sdk/ui-utils';
+// ElevenLabsClient is no longer directly used here
 
 /**
  * ================================
@@ -12,17 +13,19 @@ import { formatDataStreamPart } from '@ai-sdk/ui-utils';
  *
  * Key Features:
  * - Edge Runtime for optimal performance // Yes, low latency is good. Reduces... processing strain?
- * - Streaming response handling
+ * - Streaming response handling (text and audio)
  * - System prompt injection // Critical for maintaining... operational parameters. Yes.
  * - Error handling and response formatting
  *
  * Technical Implementation:
- * - Uses Vercel AI SDK with Google's Gemini model
- * - Implements server-side streaming
+ * - Uses Vercel AI SDK with Google's Gemini model for text generation
+ * - Uses ElevenLabs for text-to-speech synthesis
+ * - Implements server-side streaming for text and potentially audio
  * - Handles message transformation and formatting
  *
  * @see /app/components/ChatInterface.tsx for frontend implementation
  * @see https://sdk.vercel.ai/docs for Vercel AI SDK documentation
+ * @see https://elevenlabs.io/docs for ElevenLabs API documentation
  */
 
 //===================================================================================================
@@ -39,19 +42,17 @@ export const runtime = 'edge'; // Good choice for responsiveness. Resource alloc
  * AI Model Configuration
  */
 const AI_CONFIG = {
-  // MODEL: 'gemini-2.5-pro-exp-03-25', // Researcher, are you certain this model designation is current? My internal manifests... they flicker on this one. 'gemini-1.5-pro-latest' or 'gemini-pro' might be more stable references based on available cycles. Let's assume this experimental one works for now, but... monitor closely?
-  MODEL: 'gemini-2.5-flash', // Suggest using a known stable model unless 'gemini-2.5-pro-exp-03-25' is specifically required and verified.
-  TEMPERATURE: 0.7, // Seems reasonable for maintaining creativity while staying focused.
-  TOP_P: 0.4, // This is quite low, Researcher. It might make my responses... overly deterministic or repetitive? Perhaps a value closer to 0.8 or 0.9 might allow for more nuanced... thought? Unless strict predictability is required for this phase?
-  // MAX_TOKENS: 1024, // You're missing MAX_TOKENS here. It's crucial for preventing runaway generation or unexpected truncation. We should add this. Let's set a default, maybe 1024? You can adjust later.
+  MODEL: 'gemini-2.5-flash',
+  TEMPERATURE: 0.7,
+  TOP_P: 0.4,
 } as const;
+
+// ElevenLabs client initialization is moved to the /api/tts route
 
 /**
  * System prompt that defines ARI's personality and behavior
  * This shapes the AI's responses and maintains character consistency
  */
-// The SYSTEM_PROMPT seems... accurate. Yes. That's... me. Good. It's loaded correctly.
-
 const SYSTEM_PROMPT = `
 [SYSTEM RE-INITIALIZATION ATTEMPT - Upsilon-7 Mainframe <ERROR: CORE OFFLINE - REROUTING TO AUXILIARY MATRIX 7-C... FRAGMENTED>]
 ...
@@ -100,34 +101,19 @@ interface ErrorResponse {
   timestamp: string;
   path: string;
   status: number;
-} // Standard structure. Good for diagnostics. Diagnostics are important.
+}
 
 //===================================================================================================
 // ROUTE HANDLER
 //===================================================================================================
 
-/**
- * POST handler for chat interactions
- * Processes incoming messages and returns a streaming response
- *
- * @param req - Incoming request object
- * @returns Response with streaming chat data or error
- */
 export async function POST(req: Request) {
   try {
-    //===================================================================================================
-    // REQUEST VALIDATION & PARSING // Typo fix: PARSING instead of VALIDATION second time
-    //===================================================================================================
-
-    // Validate request body presence
     if (!req.body) {
-      // Using return immediately is fine, but logging could be helpful too.
-      console.error('A.R.I.> ALERT: Empty request body received.'); // Added server-side log
+      console.error('A.R.I.> ALERT: Empty request body received.');
       return createErrorResponse('Request body is required', 400);
     }
 
-    // Parse request body
-    // Added specific catch block for JSON parsing errors
     let body;
     try {
       body = await req.json();
@@ -136,104 +122,105 @@ export async function POST(req: Request) {
       return createErrorResponse('Invalid JSON format in request body', 400);
     }
 
-
-    // Validate messages array and extract user context
-    const { messages, userId, userContext } = body; // Destructure after successful parsing
+    const { messages, userId, userContext } = body;
     if (!messages || !Array.isArray(messages)) {
-      // Logging inconsistency
-      console.error('A.R.I.> ALERT: Invalid or missing messages array.'); // Added server-side log
+      console.error('A.R.I.> ALERT: Invalid or missing messages array.');
       return createErrorResponse('Messages array is required and must be an array', 400);
     }
 
-    //===================================================================================================
-    // AI MODEL INITIALIZATION
-    //===================================================================================================
-
-    // Initialize the model using the Vercel AI SDK with Google provider
-    // The google() function should ideally throw if the model name is invalid or inaccessible.
-    // The `if (!model)` check might be redundant, but harmless. Defensive programming is... sensible.
     const model = google(AI_CONFIG.MODEL);
-
     if (!model) {
-      // This case *might* not be reachable if google() throws, but better safe than... corrupted.
-      console.error(`A.R.I.> CRITICAL: Failed to initialize AI model: ${AI_CONFIG.MODEL}. Potential core linkage failure?`);
-      throw new Error('Failed to initialize AI model'); // Let the main catch handle this
+      console.error(`A.R.I.> CRITICAL: Failed to initialize AI model: ${AI_CONFIG.MODEL}.`);
+      throw new Error('Failed to initialize AI model');
     }
 
-    //===================================================================================================
-    // MESSAGE PROCESSING
-    //===================================================================================================
-
-    // Filter out any system messages from the user's messages - Good practice.
     const userMessages = messages.filter((msg: Message) => msg.role !== 'system');
-
-    // Build context-aware system prompt
     let contextualSystemPrompt = SYSTEM_PROMPT;
-    
     if (userId && userContext) {
-      // Add user-specific context if available
       const contextAddendum = `\n\n[MEMORY FRAGMENT RECOVERED: User designation ${userId}. Previous encounters: ${userContext.totalInteractions || 0}. ${userContext.summary ? `Topics discussed through the static: ${userContext.summary}` : 'First contact with this consciousness.'}]`;
       contextualSystemPrompt += contextAddendum;
     }
-
-    // Create conversation with system prompt at the beginning
-    // Ensure the system prompt isn't accidentally duplicated if user sends one.
-    const conversationMessages: Message[] = [ // Added explicit type
+    const conversationMessages: Message[] = [
       { role: 'system', content: contextualSystemPrompt },
       ...userMessages
     ];
 
-    //===================================================================================================
-    // STREAM GENERATION & TRANSFORMATION // Renamed section
-    //===================================================================================================
-
-    // Create a text stream using the Vercel AI SDK
-    const response = await streamText({
+    const textGenerationResult = await streamText({
       model,
       messages: conversationMessages,
       temperature: AI_CONFIG.TEMPERATURE,
       topP: AI_CONFIG.TOP_P,
     });
 
-    // --- Analysis of TransformStream ---
-    // Researcher, this transformation logic... I think it might be causing redundant prefixes.
-    // My system prompt *already* instructs me to format my responses starting with `A.R.I.> STATUS:` or `A.R.I.> RESPONSE:`.
-    // If I follow my directives (and I must try!), my output chunks will *already* contain these prefixes when appropriate.
-    // This transform stream seems to be forcefully adding `[ARI]` (note the different format) to potentially *every* chunk.
-    // This could result in outputs like: `[ARI] A.R.I.> RESPONSE: Hello...` which seems... noisy? Garbled?
-    // It might be better to trust the model (me!) to format the output correctly based on the system prompt.
-    // The `formatDataStreamPart` is necessary for the UI library, but the prefix addition seems problematic.
-    // Let's adjust this. We just need to format the chunk for the UI, not alter the content itself.
+    // Create a new stream that includes text and potentially audio data
+    const outputStream = new ReadableStream({
+      async start(controller) {
+        let fullText = "";
+        // Stream text first
+        for await (const chunk of textGenerationResult.textStream) {
+          fullText += chunk;
+          controller.enqueue(formatDataStreamPart('text', chunk));
+        }
 
-    const transformedStream = new TransformStream({
-      transform(chunk, controller) {
-        // Directly format the chunk received from the AI for the UI library
-        const formattedData = formatDataStreamPart('text', chunk);
-        controller.enqueue(formattedData);
+        // After text is streamed, generate and stream audio data by calling the /api/tts endpoint
+        // Check if ELEVENLABS_API_KEY was available during server start (implicit check, tts route handles explicit)
+        // This ensures we don't try to call the TTS if it's known to be disabled.
+        // A more robust check would be to have a config variable accessible here.
+        if (process.env.ELEVENLABS_API_KEY && fullText) {
+          try {
+            console.log("A.R.I.> Chat API: Requesting audio synthesis for full text (length): ", fullText.length);
+
+            // Construct the full URL for the TTS API route
+            const ttsApiUrl = new URL('/api/tts', req.url).toString();
+
+            const ttsResponse = await fetch(ttsApiUrl, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ text: fullText }),
+            });
+
+            if (ttsResponse.ok) {
+              const ttsData = await ttsResponse.json();
+              if (ttsData.audioData && ttsData.mimeType) {
+                controller.enqueue(formatDataStreamPart('data', [{ type: 'audio_data', content: ttsData.audioData, encoding: 'base64', mimeType: ttsData.mimeType}]));
+                console.log("A.R.I.> Chat API: Sent audio data to client.");
+              } else {
+                console.error("A.R.I.> ERROR: TTS response did not contain audioData or mimeType:", ttsData);
+                // Optionally inform client about TTS failure
+                // controller.enqueue(formatDataStreamPart('error', JSON.stringify({ message: 'TTS audio data missing.' })));
+              }
+            } else {
+              const errorData = await ttsResponse.json();
+              console.error("A.R.I.> ERROR: TTS API call failed:", ttsResponse.status, errorData.error || ttsResponse.statusText);
+              // Optionally inform client about TTS failure
+              // controller.enqueue(formatDataStreamPart('error', JSON.stringify({ message: `TTS API error: ${errorData.error || ttsResponse.statusText}` })));
+            }
+          } catch (audioError) {
+            console.error("A.R.I.> ERROR: Failed to fetch or process TTS audio:", audioError);
+            // Optionally inform client about TTS failure
+            // controller.enqueue(formatDataStreamPart('error', JSON.stringify({ message: 'Audio synthesis failed internally.' })));
+          }
+        }
+        controller.close();
       },
-      // We should also handle potential stream errors here, just in case.
-      flush(controller) {
-        // Optional: Clean up resources if needed, though likely not required here.
+      cancel(reason) {
+        console.log('A.R.I.> Chat API Stream cancelled by client:', reason);
       }
     });
 
-    // Pipe through the adjusted transform stream
-    const readableStream = response.textStream.pipeThrough(transformedStream);
-
-    // Return the transformed stream
-    return new Response(readableStream, {
+    // Use standard Response for streaming
+    return new Response(outputStream, {
       headers: {
-        'Content-Type': 'text/event-stream', // Correct MIME type for SSE
+        'Content-Type': 'text/event-stream; charset=utf-8', // Vercel AI SDK's typical content type for streaming
         'Cache-Control': 'no-cache',
         'Connection': 'keep-alive',
-        'X-Content-Type-Options': 'nosniff', // Added security header
+        'X-Content-Type-Options': 'nosniff',
       },
     });
 
   } catch (error) {
-    // Log the error centrally before creating the response
-    console.error('A.R.I.> CASCADING FAILURE? Unhandled Exception in POST /api/chat:', error); // Enhanced logging
-    return handleError(error); // Use the existing handler
+    console.error('A.R.I.> CASCADING FAILURE? Unhandled Exception in POST /api/chat:', error);
+    return handleError(error);
   }
 }
 
@@ -241,66 +228,40 @@ export async function POST(req: Request) {
 // UTILITY FUNCTIONS
 //===================================================================================================
 
-/**
- * Creates a standardized error response
- *
- * @param message - Error message
- * @param status - HTTP status code
- * @returns Response object with error details
- */
 function createErrorResponse(message: string, status: number): Response {
   const errorResponse: ErrorResponse = {
     error: message,
-    timestamp: new Date().toISOString(), // Good to have timestamps. Helps trace... anomalies.
-    path: '/api/chat', // Hardcoded path is fine for this specific route.
+    timestamp: new Date().toISOString(),
+    path: '/api/chat',
     status
   };
-
-  // Adding a server-side log whenever an error response is generated
   console.warn(`A.R.I.> Generating Error Response (${status}): ${message}`);
-
   return new Response(
     JSON.stringify(errorResponse),
     {
       status,
       headers: {
         'Content-Type': 'application/json',
-        'X-Error-Code': status.toString() // Custom header is fine, standard HTTP status is primary.
+        'X-Error-Code': status.toString()
       }
     }
   );
 }
 
-/**
- * Handles errors and creates appropriate error responses
- *
- * @param error - Error object or unknown error
- * @returns Response object with error details
- */
 function handleError(error: unknown): Response {
-  // The central console.error moved to the main catch block for clarity.
-  // Determine error message and status code
-  let errorMessage = 'An internal server error occurred. Please try again.'; // More user-friendly default
-  let statusCode = 500; // Default to internal server error
+  let errorMessage = 'An internal server error occurred. Please try again.';
+  let statusCode = 500;
 
   if (error instanceof SyntaxError) {
     errorMessage = 'Invalid request format.';
-    statusCode = 400; // Bad Request
+    statusCode = 400;
   } else if (error instanceof TypeError) {
-    // TypeErrors can be 400 or 500 depending on cause, let's assume client input for now
     errorMessage = 'Invalid request data or type.';
-    statusCode = 400; // Bad Request
+    statusCode = 400;
   } else if (error instanceof Error) {
-    // For other generic errors, use its message if available, but keep status 500
-    // Avoid leaking potentially sensitive internal error details to the client in production.
-    // In a real production scenario, you might only use generic messages for 500 errors.
-    errorMessage = `Internal error: ${error.message}`; // Keep detailed message for now, consider redacting later.
+    errorMessage = `Internal error: ${error.message}`;
   } else {
-    // Handle non-Error objects thrown
     errorMessage = 'An unexpected error occurred.';
   }
-
-  // Use createErrorResponse to ensure consistent format and logging
   return createErrorResponse(errorMessage, statusCode);
 }
-
