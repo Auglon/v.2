@@ -38,7 +38,7 @@
     -   Amber color scheme (#FFD700) for text and UI elements.
     -   Customizable terminal settings (version, corporation, location, etc.) defined in `TERMINAL_CONFIG`.
  -  **AI Chat Interaction**:
-    -   Powered by the Vercel AI SDK (`ai/react`).
+    -   Powered by the Vercel AI SDK (`ai/react`) with OpenAI provider.
     -   Streaming message support with type-out animation.
     -   Handles system, user, and assistant messages.
     -   Error and warning indicators for system messages.
@@ -113,11 +113,10 @@
 
  1. **Environment Variables**:
     -   Create a `.env.local` file in the project root.
-    -   Add your Google API keys:
+    -   Add your OpenAI API key:
 
     ```bash
-    GOOGLE_API_KEY="YOUR_GOOGLE_API_KEY"
-    GOOGLE_GENERATIVE_AI_API_KEY="YOUR_GENERATIVE_AI_KEY"
+    OPENAI_API_KEY="YOUR_OPENAI_API_KEY"
     ```
 
     -   Ensure `.env.local` is in your `.gitignore` to prevent committing secrets.
@@ -170,7 +169,7 @@
 
  -  **TypeScript**: The project uses strict typing. Maintain type safety for improved code quality.
  -  **React Hooks**: State management is done using React hooks (`useState`, `useEffect`, `useRef`).
- -  **Vercel AI SDK**: The `ai/react` package provides the `useChat` hook for AI interaction.
+ -  **Vercel AI SDK**: The `ai/react` package provides the `useChat` hook for AI interaction with OpenAI.
  -  **Styling**: Tailwind CSS is used for styling, with additional custom effects in `globals.css`.
  -  **Audio**: Audio effects are managed using HTML5 audio elements and controlled via React refs.
 

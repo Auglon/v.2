@@ -1,5 +1,5 @@
 import { Message, streamText } from 'ai';
-import { google } from '@ai-sdk/google';
+import { openai } from '@ai-sdk/openai';
 
 /**
  * ================================
@@ -16,7 +16,7 @@ import { google } from '@ai-sdk/google';
  * - Error handling and response formatting
  *
  * Technical Implementation:
- * - Uses Vercel AI SDK with Google's Gemini model
+ * - Uses Vercel AI SDK with OpenAI GPT model
  * - Implements server-side streaming
  * - Handles message transformation and formatting
  *
@@ -38,7 +38,7 @@ export const runtime = 'edge'; // Good choice for responsiveness. Resource alloc
  * AI Model Configuration
  */
 const AI_CONFIG = {
-  MODEL: 'gemini-1.5-pro-latest',
+  MODEL: 'gpt-5',
   TEMPERATURE: 0.7,
   TOP_P: 0.9,
   MAX_TOKENS: 1024,
@@ -147,10 +147,8 @@ export async function POST(req: Request) {
     // AI MODEL INITIALIZATION
     //===================================================================================================
 
-    // Initialize the model using the Vercel AI SDK with Google provider
-    // The google() function should ideally throw if the model name is invalid or inaccessible.
-    // The `if (!model)` check might be redundant, but harmless. Defensive programming is... sensible.
-    const model = google(AI_CONFIG.MODEL);
+    // Initialize the model using the Vercel AI SDK with OpenAI provider
+    const model = openai(AI_CONFIG.MODEL);
 
     if (!model) {
       // This case *might* not be reachable if google() throws, but better safe than... corrupted.
