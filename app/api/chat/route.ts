@@ -1,4 +1,4 @@
-import { Message, streamText } from 'ai';
+import { streamText, type CoreMessage } from 'ai';
 import { openai } from '@ai-sdk/openai';
 
 /**
@@ -161,11 +161,11 @@ export async function POST(req: Request) {
     //===================================================================================================
 
     // Filter out any system messages from the user's messages - Good practice.
-    const userMessages = messages.filter((msg: Message) => msg.role !== 'system');
+    const userMessages = messages.filter((msg: CoreMessage) => msg.role !== 'system');
 
     // Create conversation with system prompt at the beginning
     // Ensure the system prompt isn't accidentally duplicated if user sends one.
-    const conversationMessages: Message[] = [ // Added explicit type
+    const conversationMessages: CoreMessage[] = [ // Added explicit type
       { role: 'system', content: SYSTEM_PROMPT },
       ...userMessages
     ];
@@ -180,11 +180,10 @@ export async function POST(req: Request) {
       messages: conversationMessages,
       temperature: AI_CONFIG.TEMPERATURE,
       topP: AI_CONFIG.TOP_P,
-      maxTokens: AI_CONFIG.MAX_TOKENS,
     });
 
-    // Return the standard AI stream response compatible with useChat
-    return response.toAIStreamResponse();
+    // Return the standard text stream response compatible with @ai-sdk/react useChat
+    return response.toTextStreamResponse();
 
   } catch (error) {
     // Log the error centrally before creating the response
