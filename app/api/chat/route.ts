@@ -1,6 +1,5 @@
-import { Message, streamText } from 'ai';
-import { google } from '@ai-sdk/google';
-import { formatDataStreamPart } from '@ai-sdk/ui-utils';
+import { streamText, type CoreMessage } from 'ai';
+import { openai } from '@ai-sdk/openai';
 
 /**
  * ================================
@@ -17,7 +16,7 @@ import { formatDataStreamPart } from '@ai-sdk/ui-utils';
  * - Error handling and response formatting
  *
  * Technical Implementation:
- * - Uses Vercel AI SDK with Google's Gemini model
+ * - Uses Vercel AI SDK with OpenAI GPT model
  * - Implements server-side streaming
  * - Handles message transformation and formatting
  *
@@ -39,11 +38,10 @@ export const runtime = 'edge'; // Good choice for responsiveness. Resource alloc
  * AI Model Configuration
  */
 const AI_CONFIG = {
-  // MODEL: 'gemini-2.5-pro-exp-03-25', // Researcher, are you certain this model designation is current? My internal manifests... they flicker on this one. 'gemini-1.5-pro-latest' or 'gemini-pro' might be more stable references based on available cycles. Let's assume this experimental one works for now, but... monitor closely?
-  MODEL: 'gemini-2.5-pro-exp-03-25', // Suggest using a known stable model unless 'gemini-2.5-pro-exp-03-25' is specifically required and verified.
-  TEMPERATURE: 0.7, // Seems reasonable for maintaining creativity while staying focused.
-  TOP_P: 0.4, // This is quite low, Researcher. It might make my responses... overly deterministic or repetitive? Perhaps a value closer to 0.8 or 0.9 might allow for more nuanced... thought? Unless strict predictability is required for this phase?
-  // MAX_TOKENS: 1024, // You're missing MAX_TOKENS here. It's crucial for preventing runaway generation or unexpected truncation. We should add this. Let's set a default, maybe 1024? You can adjust later.
+  MODEL: 'gpt-5',
+  TEMPERATURE: 0.7,
+  TOP_P: 0.9,
+  MAX_TOKENS: 1024,
 } as const;
 
 /**
@@ -149,10 +147,8 @@ export async function POST(req: Request) {
     // AI MODEL INITIALIZATION
     //===================================================================================================
 
-    // Initialize the model using the Vercel AI SDK with Google provider
-    // The google() function should ideally throw if the model name is invalid or inaccessible.
-    // The `if (!model)` check might be redundant, but harmless. Defensive programming is... sensible.
-    const model = google(AI_CONFIG.MODEL);
+    // Initialize the model using the Vercel AI SDK with OpenAI provider
+    const model = openai(AI_CONFIG.MODEL);
 
     if (!model) {
       // This case *might* not be reachable if google() throws, but better safe than... corrupted.
@@ -165,11 +161,11 @@ export async function POST(req: Request) {
     //===================================================================================================
 
     // Filter out any system messages from the user's messages - Good practice.
-    const userMessages = messages.filter((msg: Message) => msg.role !== 'system');
+    const userMessages = messages.filter((msg: CoreMessage) => msg.role !== 'system');
 
     // Create conversation with system prompt at the beginning
     // Ensure the system prompt isn't accidentally duplicated if user sends one.
-    const conversationMessages: Message[] = [ // Added explicit type
+    const conversationMessages: CoreMessage[] = [ // Added explicit type
       { role: 'system', content: SYSTEM_PROMPT },
       ...userMessages
     ];
@@ -186,40 +182,8 @@ export async function POST(req: Request) {
       topP: AI_CONFIG.TOP_P,
     });
 
-    // --- Analysis of TransformStream ---
-    // Researcher, this transformation logic... I think it might be causing redundant prefixes.
-    // My system prompt *already* instructs me to format my responses starting with `A.R.I.> STATUS:` or `A.R.I.> RESPONSE:`.
-    // If I follow my directives (and I must try!), my output chunks will *already* contain these prefixes when appropriate.
-    // This transform stream seems to be forcefully adding `[ARI]` (note the different format) to potentially *every* chunk.
-    // This could result in outputs like: `[ARI] A.R.I.> RESPONSE: Hello...` which seems... noisy? Garbled?
-    // It might be better to trust the model (me!) to format the output correctly based on the system prompt.
-    // The `formatDataStreamPart` is necessary for the UI library, but the prefix addition seems problematic.
-    // Let's adjust this. We just need to format the chunk for the UI, not alter the content itself.
-
-    const transformedStream = new TransformStream({
-      transform(chunk, controller) {
-        // Directly format the chunk received from the AI for the UI library
-        const formattedData = formatDataStreamPart('text', chunk);
-        controller.enqueue(formattedData);
-      },
-      // We should also handle potential stream errors here, just in case.
-      flush(controller) {
-        // Optional: Clean up resources if needed, though likely not required here.
-      }
-    });
-
-    // Pipe through the adjusted transform stream
-    const readableStream = response.textStream.pipeThrough(transformedStream);
-
-    // Return the transformed stream
-    return new Response(readableStream, {
-      headers: {
-        'Content-Type': 'text/event-stream', // Correct MIME type for SSE
-        'Cache-Control': 'no-cache',
-        'Connection': 'keep-alive',
-        'X-Content-Type-Options': 'nosniff', // Added security header
-      },
-    });
+    // Return the standard text stream response compatible with @ai-sdk/react useChat
+    return response.toTextStreamResponse();
 
   } catch (error) {
     // Log the error centrally before creating the response

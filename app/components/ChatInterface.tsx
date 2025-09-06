@@ -1,6 +1,6 @@
 "use client";
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { useChat, Message } from 'ai/react';
+import { useChat, type Message } from '@ai-sdk/react';
 import { Send } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
@@ -10,14 +10,14 @@ import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
 
 // --- Configuration ---
 const AUDIO_ASSETS = {
-  AMBIENT: '/sounds/terminal_ambient_hum_loop.wav',
-  TYPING: '/sounds/terminal_keypress_sequence.wav',
-  ERROR: '/sounds/terminal_error_glitch.wav',
-  BOOT: '/sounds/terminal_boot_sequence.wav',
-  MESSAGE_RECEIVE: '/sounds/terminal_message_bleep.wav',
-  SEND: '/sounds/terminal_send_confirm.wav',
-  CLEAR: '/sounds/terminal_clear_command.wav',
-};
+  AMBIENT: '/static.mp3', // subtle ambient hiss
+  TYPING: '/typing-sound.mp3',
+  ERROR: '/error.mp3',
+  BOOT: '/computer-process-beeps.mp3',
+  MESSAGE_RECEIVE: '/buzz.mp3',
+  SEND: '/enter-sound.mp3',
+  CLEAR: '/computer-process-beeps.mp3',
+} as const;
 
 interface CustomMessage extends Message {
   isComplete?: boolean;
@@ -125,6 +125,8 @@ body {
 @keyframes box-glow-subtle-pulse { 0%, 100% { box-shadow: 0 0 8px 2px var(--terminal-glow), 0 0 14px 4px rgba(255, 176, 0, 0.3); opacity: 0.9; } 50% { box-shadow: 0 0 6px 1px var(--terminal-glow), 0 0 10px 3px rgba(255, 176, 0, 0.2); opacity: 1; } }
 @keyframes pulse { 50% { opacity: 0.5; } }
 @keyframes spin-slow { to { transform: rotate(360deg); } }
+/* Utility class for slow spinner */
+.animate-spin-slow { animation: spin-slow 1.25s linear infinite; }
 @keyframes text-jitter-mild { 25% { transform: translate(0.4px, -0.4px); } 75% { transform: translate(-0.4px, 0.4px); } }
 @keyframes text-jitter-moderate { 25% { transform: translate(0.7px, -0.3px); } 50% { transform: translate(-0.3px, 0.7px); } 75% { transform: translate(0.3px, -0.7px); } }
 @keyframes text-jitter-severe { 20% { transform: translate(1px, -0.6px) skewX(-1deg); } 40% { transform: translate(-0.6px, 1px) skewX(1deg); } 60% { transform: translate(0.6px, 0.6px) skewX(-0.5deg); } 80% { transform: translate(-1px, -0.3px) skewX(0.5deg); } }
@@ -170,6 +172,17 @@ body {
 /* Use this class on the progress bar div */
 .animate-pulse-erratic {
   animation: pulse-erratic 1.5s infinite ease-in-out;
+}
+
+/* Streaming cursor shown while assistant is sending tokens */
+.stream-cursor {
+  display: inline-block;
+  width: 0.6ch;
+  height: 1em;
+  margin-left: 2px;
+  background: var(--terminal-glow);
+  vertical-align: baseline;
+  animation: blink-cursor 1s steps(1, end) infinite;
 }
 
 /* --- Ensure base 'animate-pulse' exists if used elsewhere --- */
@@ -234,6 +247,19 @@ export default function ChatInterface() { // Add 'default' here
   const bootSoundRef = useRef<HTMLAudioElement>(null);
 
   const audioRefs = { ambientAudioRef, typingSoundRef, errorSoundRef, messageReceiveSoundRef, sendSoundRef, clearSoundRef, bootSoundRef };
+
+  const getAudioRef = (key: keyof typeof AUDIO_ASSETS) => {
+    switch (key) {
+      case 'AMBIENT': return ambientAudioRef;
+      case 'TYPING': return typingSoundRef;
+      case 'ERROR': return errorSoundRef;
+      case 'BOOT': return bootSoundRef;
+      case 'MESSAGE_RECEIVE': return messageReceiveSoundRef;
+      case 'SEND': return sendSoundRef;
+      case 'CLEAR': return clearSoundRef;
+      default: return ambientAudioRef;
+    }
+  };
 
   // --- Chat Hook ---
   const { messages, input, handleInputChange, handleSubmit, isLoading, error, setMessages } = useChat({
@@ -363,14 +389,14 @@ export default function ChatInterface() { // Add 'default' here
         onClick={enableAudio} // Enable audio on first click anywhere
       >
         {/* Audio Elements */}
-        {Object.entries(AUDIO_ASSETS).map(([key, src]) => (
+        {(Object.keys(AUDIO_ASSETS) as Array<keyof typeof AUDIO_ASSETS>).map((key) => (
           <audio
             key={key}
-            ref={audioRefs[key as keyof typeof audioRefs]}
-            src={src}
+            ref={getAudioRef(key)}
+            src={AUDIO_ASSETS[key]}
             preload="auto"
             muted={!isAudioEnabled}
-            loop={key === 'ambientAudioRef'}
+            loop={key === 'AMBIENT'}
           />
         ))}
 
@@ -417,7 +443,7 @@ export default function ChatInterface() { // Add 'default' here
         {/* Chat Message Area */}
         <div className={`flex-1 overflow-y-auto p-4 pt-8 pb-28 scrollbar-thin ${showBootScreen ? 'opacity-0' : 'opacity-100 transition-opacity duration-1000'}`}>
           <div className="max-w-4xl mx-auto space-y-4"> {/* Reduced space */}
-            {messages.map((msg: CustomMessage) => {
+            {messages.map((msg: CustomMessage, idx: number) => {
               const isUser = msg.role === 'user';
               const isSystem = msg.role === 'system';
               const isARI = !isUser && !isSystem;
@@ -481,6 +507,9 @@ export default function ChatInterface() { // Add 'default' here
                       >
                         {isARI ? applyTextGlitch(msg.content) as string : msg.content}
                       </ReactMarkdown>
+                      {isARI && !msg.isComplete && (
+                        <span className="stream-cursor" aria-hidden="true" />
+                      )}
                     </div>
                   </div>
                 </div>
