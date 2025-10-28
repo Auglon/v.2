@@ -233,24 +233,24 @@ export default function ChatInterface() { // Add 'default' here
   const clearSoundRef = useRef<HTMLAudioElement>(null);
   const bootSoundRef = useRef<HTMLAudioElement>(null);
 
-  const audioRefs = { ambientAudioRef, typingSoundRef, errorSoundRef, messageReceiveSoundRef, sendSoundRef, clearSoundRef, bootSoundRef };
-
   // --- Chat Hook ---
   const { messages, input, handleInputChange, handleSubmit, isLoading, error, setMessages } = useChat({
     api: '/api/chat',
     initialMessages: [],
     onFinish: (message) => {
+      console.log('[A.R.I. Chat] Message completed:', message.id);
       setMessages(currentMessages => currentMessages.map(m => m.id === message.id ? { ...m, isComplete: true } : m));
       playSound(messageReceiveSoundRef);
       setVisualGlitchIntensity(prev => Math.max(0, prev - 1));
     },
     onError: (err) => {
-      console.error("A.R.I.> Chat Error Intercepted:", err);
+      console.error('[A.R.I. Chat Error] Transmission error:', err.message);
       playSound(errorSoundRef);
       setVisualGlitchIntensity(prev => Math.min(5, prev + 2.5)); // More intense glitch on error
       setMessages(currentMessages => [...currentMessages, { id: 'error-' + Date.now(), role: 'system', content: `[SYSTEM FAULT] Transmission corrupted. Please retry.\n${err.message}` }]);
     },
     onResponse: () => {
+      console.log('[A.R.I. Chat] Response received, streaming started');
       setVisualGlitchIntensity(prev => Math.max(0, prev - 0.5));
     }
   });
@@ -258,9 +258,18 @@ export default function ChatInterface() { // Add 'default' here
   // --- Audio Handling ---
   const playSound = useCallback((audioRef: React.RefObject<HTMLAudioElement>, volume = 1) => {
     if (isAudioEnabled && audioRef.current) {
+      const audioSrc = audioRef.current.src;
       audioRef.current.currentTime = 0;
       audioRef.current.volume = volume;
-      audioRef.current.play().catch(e => console.warn("A.R.I.> Audio Playback Interrupted:", e?.message));
+      audioRef.current.play()
+        .then(() => {
+          console.log(`[A.R.I. Audio] Successfully played: ${audioSrc.split('/').pop()}`);
+        })
+        .catch(e => {
+          console.error(`[A.R.I. Audio Error] Failed to play ${audioSrc.split('/').pop()}:`, e?.message || e);
+        });
+    } else if (!isAudioEnabled) {
+      console.log('[A.R.I. Audio] Audio disabled - skipping playback');
     }
   }, [isAudioEnabled]);
 
@@ -277,8 +286,13 @@ export default function ChatInterface() { // Add 'default' here
       if (bootSoundRef.current) bootSoundRef.current.volume = 0.7;
 
       // Start ambient loop
-      ambientAudioRef.current?.play().catch(e => console.warn("A.R.I.> Ambient Audio Failed:", e?.message));
+      if (ambientAudioRef.current) {
+        ambientAudioRef.current.play()
+          .then(() => console.log('[A.R.I. Audio] Ambient loop started successfully'))
+          .catch(e => console.error('[A.R.I. Audio Error] Ambient Audio Failed:', e?.message || e));
+      }
       playSound(bootSoundRef, 0.7); // Play boot sound on enable
+      console.log('[A.R.I. Audio] Audio system initialized');
     }
   }, [isAudioEnabled, playSound, bootSoundRef]);
 
@@ -338,12 +352,14 @@ export default function ChatInterface() { // Add 'default' here
     enableAudio(); // Ensure audio is on if user submits
 
     if (input.trim().toLowerCase() === 'clear') {
+      console.log('[A.R.I. Chat] Clearing message history');
       setMessages([]);
       playSound(clearSoundRef, 0.5);
       handleInputChange({ target: { value: '' } } as any); // Use handleInputChange to clear
       return;
     }
 
+     console.log('[A.R.I. Chat] Sending message:', input.substring(0, 50) + (input.length > 50 ? '...' : ''));
      playSound(sendSoundRef, 0.5);
      handleSubmit(e); // Vercel AI hook handles adding user message & API call
      setVisualGlitchIntensity(prev => Math.min(5, prev + 0.6));
@@ -363,16 +379,13 @@ export default function ChatInterface() { // Add 'default' here
         onClick={enableAudio} // Enable audio on first click anywhere
       >
         {/* Audio Elements */}
-        {Object.entries(AUDIO_ASSETS).map(([key, src]) => (
-          <audio
-            key={key}
-            ref={audioRefs[key as keyof typeof audioRefs]}
-            src={src}
-            preload="auto"
-            muted={!isAudioEnabled}
-            loop={key === 'ambientAudioRef'}
-          />
-        ))}
+        <audio ref={ambientAudioRef} src={AUDIO_ASSETS.AMBIENT} preload="auto" muted={!isAudioEnabled} loop />
+        <audio ref={typingSoundRef} src={AUDIO_ASSETS.TYPING} preload="auto" muted={!isAudioEnabled} />
+        <audio ref={errorSoundRef} src={AUDIO_ASSETS.ERROR} preload="auto" muted={!isAudioEnabled} />
+        <audio ref={messageReceiveSoundRef} src={AUDIO_ASSETS.MESSAGE_RECEIVE} preload="auto" muted={!isAudioEnabled} />
+        <audio ref={sendSoundRef} src={AUDIO_ASSETS.SEND} preload="auto" muted={!isAudioEnabled} />
+        <audio ref={clearSoundRef} src={AUDIO_ASSETS.CLEAR} preload="auto" muted={!isAudioEnabled} />
+        <audio ref={bootSoundRef} src={AUDIO_ASSETS.BOOT} preload="auto" muted={!isAudioEnabled} />
 
          {/* Audio Enable Prompt */}
         {!isAudioEnabled && !showBootScreen && (
@@ -422,10 +435,10 @@ export default function ChatInterface() { // Add 'default' here
               const isSystem = msg.role === 'system';
               const isARI = !isUser && !isSystem;
 
-              const applyTextGlitch = (text: string): React.ReactNode => {
+              const applyTextGlitch = (text: string): string => {
                 if (!isBooted || visualGlitchIntensity < 3 || Math.random() > visualGlitchIntensity * 0.06) return text;
                 // More subtle glitch: occasional char swap or unicode garbage
-                 return text.split('').map((char, index) => {
+                return text.split('').map((char) => {
                     if (Math.random() < 0.02 * visualGlitchIntensity) {
                       return String.fromCharCode(Math.random() * (190 - 33) + 33); // Wider range including some weirder chars
                     }
@@ -479,7 +492,7 @@ export default function ChatInterface() { // Add 'default' here
                           },
                         }}
                       >
-                        {isARI ? applyTextGlitch(msg.content) as string : msg.content}
+                        {isARI ? applyTextGlitch(msg.content) : msg.content}
                       </ReactMarkdown>
                     </div>
                   </div>
