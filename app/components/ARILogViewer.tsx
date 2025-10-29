@@ -106,7 +106,7 @@ export default function ARILogViewer({ userId, onClose }: ARILogViewerProps) {
               
               {/* A.R.I.'s Notes */}
               <div className="border border-[#FFB000]/30 p-4 bg-[#FFB000]/5">
-                <h3 className="text-[#FFB000] mb-3">A.R.I.'S PRIVATE OBSERVATIONS</h3>
+                <h3 className="text-[#FFB000] mb-3">A.R.I.&apos;S PRIVATE OBSERVATIONS</h3>
                 <div className="text-[#FFB000]/80 text-sm whitespace-pre-wrap font-mono">
                   {logs.ariNotes}
                 </div>
