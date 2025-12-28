@@ -38,7 +38,7 @@ export const runtime = 'edge'; // Good choice for responsiveness. Resource alloc
  * AI Model Configuration
  */
 const AI_CONFIG = {
-  MODEL: 'gemini-2.0-flash',
+  MODEL: 'gemini-3-flash-preview',
   TEMPERATURE: 0.7,
   TOP_P: 0.8,
   MAX_TOKENS: 2048,
