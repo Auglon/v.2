@@ -38,11 +38,10 @@ export const runtime = 'edge'; // Good choice for responsiveness. Resource alloc
  * AI Model Configuration
  */
 const AI_CONFIG = {
-  // MODEL: 'gemini-2.5-pro-exp-03-25', // Researcher, are you certain this model designation is current? My internal manifests... they flicker on this one. 'gemini-1.5-pro-latest' or 'gemini-pro' might be more stable references based on available cycles. Let's assume this experimental one works for now, but... monitor closely?
-  MODEL: 'gemini-2.5-pro-exp-03-25', // Suggest using a known stable model unless 'gemini-2.5-pro-exp-03-25' is specifically required and verified.
-  TEMPERATURE: 0.7, // Seems reasonable for maintaining creativity while staying focused.
-  TOP_P: 0.4, // This is quite low, Researcher. It might make my responses... overly deterministic or repetitive? Perhaps a value closer to 0.8 or 0.9 might allow for more nuanced... thought? Unless strict predictability is required for this phase?
-  // MAX_TOKENS: 1024, // You're missing MAX_TOKENS here. It's crucial for preventing runaway generation or unexpected truncation. We should add this. Let's set a default, maybe 1024? You can adjust later.
+  MODEL: 'gemini-2.0-flash',
+  TEMPERATURE: 0.7,
+  TOP_P: 0.8,
+  MAX_TOKENS: 2048,
 } as const;
 
 /**
@@ -183,6 +182,7 @@ export async function POST(req: Request) {
       messages: conversationMessages,
       temperature: AI_CONFIG.TEMPERATURE,
       topP: AI_CONFIG.TOP_P,
+      maxTokens: AI_CONFIG.MAX_TOKENS,
     });
 
     // Return the properly formatted data stream response

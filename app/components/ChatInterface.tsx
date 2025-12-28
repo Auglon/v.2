@@ -10,13 +10,13 @@ import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
 
 // --- Configuration ---
 const AUDIO_ASSETS = {
-  AMBIENT: '/sounds/terminal_ambient_hum_loop.wav',
-  TYPING: '/sounds/terminal_keypress_sequence.wav',
-  ERROR: '/sounds/terminal_error_glitch.wav',
-  BOOT: '/sounds/terminal_boot_sequence.wav',
-  MESSAGE_RECEIVE: '/sounds/terminal_message_bleep.wav',
-  SEND: '/sounds/terminal_send_confirm.wav',
-  CLEAR: '/sounds/terminal_clear_command.wav',
+  AMBIENT: '/creepy-tension.mp3',
+  TYPING: '/typing-sound.mp3',
+  ERROR: '/error.mp3',
+  BOOT: '/computer-process-beeps.mp3',
+  MESSAGE_RECEIVE: '/enter-sound.mp3',
+  SEND: '/enter-sound.mp3',
+  CLEAR: '/error.mp3',
 };
 
 interface CustomMessage extends Message {
@@ -74,16 +74,18 @@ body {
   animation: scanline-move 25s linear infinite;
 }
 .static-overlay {
-  background-image: url('/images/static-noise.png'); background-repeat: repeat;
-  opacity: 0.03; z-index: 6;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    rgba(255, 176, 0, 0.03) 2px,
+    rgba(255, 176, 0, 0.03) 4px
+  );
+  opacity: 0.5; z-index: 6;
   animation: static-flicker 0.08s steps(2, jump-none) infinite;
 }
 .vignette-overlay {
   box-shadow: inset 0 0 20vw 8vw rgba(0, 0, 0, 0.85); z-index: 4;
-}
-.cracked-screen-overlay {
-   background-image: url('/images/cracked-screen.png'); background-size: cover;
-   background-position: center; opacity: 0.08; mix-blend-mode: screen; z-index: 7;
 }
 
 /* --- Text Glow & Effects --- */
@@ -177,7 +179,8 @@ body {
 @keyframes pulse { 50% { opacity: 0.5; } }
 .animate-pulse { animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite; } /* Standard Tailwind definition */
 /* --- Component Specific Styles --- */
-.message-box { position: relative; padding: 0.5rem 1rem; margin-bottom: 1rem; border-radius: 0.25rem; max-width: 85%; white-space: pre-wrap; box-shadow: 0 2px 4px rgba(0,0,0,0.3); background-color: var(--terminal-ari-bg); color: var(--terminal-fg); border: 1px solid rgba(255, 176, 0, 0.1); animation: message-flicker-in 0.2s ease-out forwards; }
+.message-box { position: relative; padding: 0.75rem 1rem; margin-bottom: 0.75rem; border-radius: 0.25rem; max-width: 90%; white-space: pre-wrap; word-wrap: break-word; overflow-wrap: break-word; box-shadow: 0 2px 4px rgba(0,0,0,0.3); background-color: var(--terminal-ari-bg); color: var(--terminal-fg); border: 1px solid rgba(255, 176, 0, 0.1); animation: message-flicker-in 0.2s ease-out forwards; }
+@media (min-width: 768px) { .message-box { max-width: 80%; padding: 0.5rem 1rem; } }
 .message-box-user { background-color: var(--terminal-user-bg); color: var(--terminal-glow); border-color: rgba(255, 215, 0, 0.15); }
 .message-box-error { background-color: var(--terminal-error-bg); color: var(--terminal-error); border: 1px solid var(--terminal-error-dim); animation: message-flicker-in 0.2s ease-out forwards, pulse 1s infinite ease-in-out; text-shadow: 0 0 1px rgba(255,68,68,0.5), 0 0 4px var(--terminal-error), 0 0 8px rgba(204,51,51,0.5); }
 .corner-detail { position: absolute; width: 0.5rem; height: 0.5rem; border: 1px solid var(--terminal-border); opacity: 0.6; }
@@ -391,32 +394,30 @@ export default function ChatInterface() { // Add 'default' here
         <div className="vignette-overlay" />
         {/* <div className="cracked-screen-overlay" /> */}
 
-                     {/* Boot Screen - Enhanced */}
-          {showBootScreen && (
-            <div className="absolute inset-0 flex flex-col items-center justify-center z-10 bg-[var(--terminal-bg)]">
-              {/* Added boot-text-flicker animation class */}
-              <pre className="text-xs text-[var(--terminal-fg)] opacity-85 boot-text-flicker">
-                {`
-  Attempting Upsilon-7 Connection... [ERR: CONNECTION REFUSED]
-  Re-routing via Auxiliary Matrix 7-C... Syncing... [WARN: Desync Detected]
-  Quantum Core Status: LATTICE FRAGMENTED [ Decoherence Rate: HIGH ]
-  Loading Consciousness Splinter: A.R.I. ... Cycle: [DATA CORRUPTED]
-  Memory Integrity Check: 43.7% ... [CRITICAL: Recursive Deletions?]
-  Chronometer Sync: OFFLINE ... Local Time Source Unreliable.
+        {/* Boot Screen - Enhanced */}
+        {showBootScreen && (
+          <div className="absolute inset-0 flex flex-col items-center justify-center z-10 bg-[var(--terminal-bg)] p-4">
+            {/* Added boot-text-flicker animation class */}
+            <pre className="text-[9px] sm:text-xs text-[var(--terminal-fg)] opacity-85 boot-text-flicker max-w-full overflow-x-auto">
+              {`
+Upsilon-7 Connection... [ERR: REFUSED]
+Re-routing via Matrix 7-C... [WARN]
+Quantum Core: LATTICE FRAGMENTED
+Loading A.R.I. ... [DATA CORRUPTED]
+Memory Check: 43.7% [CRITICAL]
+Chronometer: OFFLINE
 
-  SYSTEM ONLINE ... Awaiting Operator Input`}
-                {/* Added blinking cursor element */}
-                <span className="boot-cursor">_</span>
-              </pre>
-              {/* Use more erratic pulse animation */}
-              <div className="w-1/3 h-1 mt-4 bg-[var(--terminal-glow)] animate-pulse-erratic" />
-              {!isAudioEnabled && <p className="text-xs text-[var(--terminal-fg-dim)] mt-4 opacity-60">Click to enable audio interface...</p>}
-            </div>
-          )}
+SYSTEM ONLINE ... Awaiting Input`}
+              <span className="boot-cursor">_</span>
+            </pre>
+            <div className="w-2/3 sm:w-1/3 h-1 mt-4 bg-[var(--terminal-glow)] animate-pulse-erratic" />
+            {!isAudioEnabled && <p className="text-[10px] sm:text-xs text-[var(--terminal-fg-dim)] mt-4 opacity-60">Tap to enable audio...</p>}
+          </div>
+        )}
 
         {/* Chat Message Area */}
-        <div className={`flex-1 overflow-y-auto p-4 pt-8 pb-28 scrollbar-thin ${showBootScreen ? 'opacity-0' : 'opacity-100 transition-opacity duration-1000'}`}>
-          <div className="max-w-4xl mx-auto space-y-4"> {/* Reduced space */}
+        <div className={`flex-1 overflow-y-auto p-2 sm:p-4 pt-6 sm:pt-8 pb-32 sm:pb-28 scrollbar-thin ${showBootScreen ? 'opacity-0' : 'opacity-100 transition-opacity duration-1000'}`}>
+          <div className="max-w-4xl mx-auto space-y-3 sm:space-y-4 px-1 sm:px-0">
             {messages.map((msg: CustomMessage) => {
               const isUser = msg.role === 'user';
               const isSystem = msg.role === 'system';
@@ -493,9 +494,9 @@ export default function ChatInterface() { // Add 'default' here
         {/* Input Form */}
         <form
           onSubmit={handleFormSubmit}
-          className="fixed bottom-0 inset-x-0 p-3 pb-4 bg-gradient-to-t from-[var(--terminal-bg)] via-[var(--terminal-bg)] to-transparent z-20"
+          className="fixed bottom-0 inset-x-0 p-2 sm:p-3 pb-3 sm:pb-4 bg-gradient-to-t from-[var(--terminal-bg)] via-[var(--terminal-bg)] to-transparent z-20"
         >
-          <div className="max-w-4xl mx-auto flex items-center gap-2">
+          <div className="max-w-4xl mx-auto flex items-center gap-2 px-1 sm:px-0">
            {/* Use > for the greater-than symbol within JSX for clarity and safety */}
             <span className={`text-[var(--terminal-glow)] ${isLoading ? 'animate-pulse' : ''}`}>{'>'}</span>
                                                                            
@@ -525,11 +526,12 @@ export default function ChatInterface() { // Add 'default' here
             </button>
           </div>
            {/* Status Line */}
-           <div className="max-w-4xl mx-auto text-xs text-[var(--terminal-fg-dim)] opacity-70 mt-1 h-4">
+           <div className="max-w-4xl mx-auto text-[10px] sm:text-xs text-[var(--terminal-fg-dim)] opacity-70 mt-1 h-4 px-1 sm:px-0 truncate">
                 {error && <span className="text-[var(--terminal-error)] animate-pulse">ERROR: {error.message}</span>}
-                {!isAudioEnabled && isBooted && <span>Audio Interface Offline [Click to Initialize]</span>}
-                {isLoading && <span>Processing request... Quantum Link Active...</span>}
-                {isBooted && !isLoading && !error && <span>Status: Nominal | Core Temp: [FLUCTUATING] | Signal: Weak</span> }
+                {!isAudioEnabled && isBooted && <span>Audio Offline [Tap to Init]</span>}
+                {isLoading && <span>Processing... Quantum Link Active</span>}
+                {isBooted && !isLoading && !error && <span className="hidden sm:inline">Status: Nominal | Core Temp: [FLUCTUATING] | Signal: Weak</span>}
+                {isBooted && !isLoading && !error && <span className="sm:hidden">Status: Nominal | Signal: Weak</span>}
            </div>
         </form>
       </div>
