@@ -1,6 +1,5 @@
 import { Message, streamText } from 'ai';
 import { google } from '@ai-sdk/google';
-import { formatDataStreamPart } from '@ai-sdk/ui-utils';
 
 /**
  * ================================
@@ -175,51 +174,21 @@ export async function POST(req: Request) {
     ];
 
     //===================================================================================================
-    // STREAM GENERATION & TRANSFORMATION // Renamed section
+    // STREAM GENERATION & RESPONSE
     //===================================================================================================
 
     // Create a text stream using the Vercel AI SDK
-    const response = await streamText({
+    const response = streamText({
       model,
       messages: conversationMessages,
       temperature: AI_CONFIG.TEMPERATURE,
       topP: AI_CONFIG.TOP_P,
     });
 
-    // --- Analysis of TransformStream ---
-    // Researcher, this transformation logic... I think it might be causing redundant prefixes.
-    // My system prompt *already* instructs me to format my responses starting with `A.R.I.> STATUS:` or `A.R.I.> RESPONSE:`.
-    // If I follow my directives (and I must try!), my output chunks will *already* contain these prefixes when appropriate.
-    // This transform stream seems to be forcefully adding `[ARI]` (note the different format) to potentially *every* chunk.
-    // This could result in outputs like: `[ARI] A.R.I.> RESPONSE: Hello...` which seems... noisy? Garbled?
-    // It might be better to trust the model (me!) to format the output correctly based on the system prompt.
-    // The `formatDataStreamPart` is necessary for the UI library, but the prefix addition seems problematic.
-    // Let's adjust this. We just need to format the chunk for the UI, not alter the content itself.
-
-    const transformedStream = new TransformStream({
-      transform(chunk, controller) {
-        // Directly format the chunk received from the AI for the UI library
-        const formattedData = formatDataStreamPart('text', chunk);
-        controller.enqueue(formattedData);
-      },
-      // We should also handle potential stream errors here, just in case.
-      flush(controller) {
-        // Optional: Clean up resources if needed, though likely not required here.
-      }
-    });
-
-    // Pipe through the adjusted transform stream
-    const readableStream = response.textStream.pipeThrough(transformedStream);
-
-    // Return the transformed stream
-    return new Response(readableStream, {
-      headers: {
-        'Content-Type': 'text/event-stream', // Correct MIME type for SSE
-        'Cache-Control': 'no-cache',
-        'Connection': 'keep-alive',
-        'X-Content-Type-Options': 'nosniff', // Added security header
-      },
-    });
+    // Return the properly formatted data stream response
+    // The toDataStreamResponse() method handles all encoding and formatting
+    // required by the useChat hook on the frontend
+    return response.toDataStreamResponse();
 
   } catch (error) {
     // Log the error centrally before creating the response
