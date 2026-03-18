@@ -6,8 +6,8 @@
 /* --- Font Import --- */
 @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;700&display=swap');
 
-/* --- Base Configuration & Variables --- */
-:root {
+/* --- Component Styles --- */
+.terminalTheme {
   --terminal-bg: #080600; /* Slightly deeper black */
   --terminal-fg: #FFB000; /* Primary Amber/Gold */
   --terminal-fg-dim: #B37C00; /* Dimmer Amber */
@@ -20,31 +20,126 @@
   --terminal-ari-bg: #1a1000; /* Darker ARI Background */
   --terminal-border: rgba(255, 176, 0, 0.3); /* Dim border color */
   --terminal-border-glow: rgba(255, 215, 0, 0.5); /* Glowing border color */
-}
 
-/* --- Body & Base Styles --- */
-body {
   background-color: var(--terminal-bg);
   color: var(--terminal-fg);
-  /* ! Use the loaded monospace font ! */
   font-family: 'IBM Plex Mono', 'Courier New', Courier, monospace;
-  overflow: hidden; /* Prevent scrollbars on the body itself */
+  overflow: hidden;
   height: 100vh;
   width: 100vw;
   margin: 0;
   padding: 0;
 }
 
-/* --- Main Terminal Container & CRT Effect --- */
-.crt-effect {
-  position: fixed; /* Use fixed to ensure it covers viewport */
+.crtEffect {
+  position: fixed;
   inset: 0;
-  overflow: hidden; /* Hide overflow from inner effects */
+  overflow: hidden;
   background-color: var(--terminal-bg);
-  /* Base CRT look: slight saturation, contrast boost */
   filter: brightness(1.05) contrast(1.1) saturate(1.15);
-  /* Base screen flicker - subtle */
   animation: screen-flicker 0.15s infinite alternate;
+}
+
+.scanlineOverlay {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 5;
+  background: linear-gradient(
+    to bottom,
+    transparent 50%,
+    rgba(0, 0, 0, 0.35) 50%
+  );
+  background-size: 100% 3px;
+  opacity: 0.1;
+  animation: scanline-move 25s linear infinite;
+}
+
+.staticOverlay {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 6;
+  background-image: url('/images/static-noise.png');
+  background-repeat: repeat;
+  opacity: 0.03;
+  animation: static-flicker 0.08s steps(2, jump-none) infinite;
+}
+
+.vignetteOverlay {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 4;
+  box-shadow: inset 0 0 20vw 8vw rgba(0, 0, 0, 0.85);
+}
+
+.messageBox {
+  position: relative;
+  padding: 1rem;
+  border-radius: 0.375rem;
+  max-width: 85%;
+  white-space: pre-wrap;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  background-color: var(--terminal-ari-bg);
+  color: var(--terminal-fg);
+  border: 1px solid rgba(255, 176, 0, 0.1);
+  animation: message-flicker-in 0.2s ease-out forwards;
+}
+
+.messageBoxUser {
+  background-color: var(--terminal-user-bg);
+  color: var(--terminal-glow);
+  border-color: rgba(255, 215, 0, 0.15);
+}
+
+.messageBoxError {
+  background-color: var(--terminal-error-bg);
+  color: var(--terminal-error);
+  border: 1px solid var(--terminal-error-dim);
+  animation: message-flicker-in 0.2s ease-out forwards, pulse 1s infinite ease-in-out;
+}
+
+.textGlow {
+  text-shadow:
+    0 0 1px rgba(255, 176, 0, 0.4),
+    0 0 3px var(--terminal-glow),
+    0 0 7px rgba(255, 215, 0, 0.5);
+}
+
+.textGlowError {
+  text-shadow:
+    0 0 1px rgba(255, 68, 68, 0.5),
+    0 0 4px var(--terminal-error),
+    0 0 8px rgba(204, 51, 51, 0.5);
+}
+
+/* Keyframe animations */
+@keyframes screen-flicker {
+  from { opacity: 1; }
+  to { opacity: 0.97; }
+}
+
+@keyframes scanline-move {
+  to { background-position-y: 3px; }
+}
+
+@keyframes static-flicker {
+  0% { transform: translate(1px, -1px); opacity: 0.9; }
+  25% { transform: translate(-1px, 1px); opacity: 0.6; }
+  50% { transform: translate(1px, 1px); opacity: 1.0; }
+  75% { transform: translate(-1px, -1px); opacity: 0.5; }
+  100% { transform: translate(1px, -1px); opacity: 0.9; }
+}
+
+@keyframes message-flicker-in {
+  0% { opacity: 0; filter: brightness(3); transform: scale(1.05); }
+  30% { opacity: 0.7; filter: brightness(1.5); transform: scale(1); }
+  100% { opacity: 1; filter: brightness(1); transform: scale(1); }
+}
+
+@keyframes pulse {
+  50% { opacity: 0.5; }
 }
 
 /* --- Overlay Effects (Place corresponding divs inside .crt-effect) --- */
@@ -56,32 +151,6 @@ body {
    inset: 0;
    pointer-events: none; /* Essential for overlays */
    z-index: 5; /* Base overlay level */
-}
-
-.scanline-overlay {
-  background: linear-gradient(
-    to bottom,
-    transparent 50%,
-    rgba(0, 0, 0, 0.35) 50% /* Darker, more visible lines */
-  );
-  background-size: 100% 3px; /* Scanline thickness */
-  opacity: 0.1; /* Very subtle */
-  animation: scanline-move 25s linear infinite; /* Slower */
-}
-
-.static-overlay {
-  /* Ensure image exists or use Base64 */
-  background-image: url('/images/static-noise.png');
-  background-repeat: repeat;
-  opacity: 0.03; /* Start very subtle */
-  z-index: 6; /* Above scanlines */
-  animation: static-flicker 0.08s steps(2, jump-none) infinite; /* Faster steps */
-}
-
-.vignette-overlay {
-  /* More intense vignette for focused look */
-  box-shadow: inset 0 0 20vw 8vw rgba(0, 0, 0, 0.85);
-  z-index: 4; /* Below scanlines */
 }
 
 .cracked-screen-overlay {
@@ -154,20 +223,6 @@ body {
 }
 
 /* --- Keyframe Animations --- */
-@keyframes screen-flicker { /* More subtle flicker base */
-  from { opacity: 1; }
-  to { opacity: 0.97; }
-}
-@keyframes scanline-move {
-  to { background-position-y: 3px; }
-}
-@keyframes static-flicker {
-   0% { transform: translate(1px, -1px); opacity: 0.9; }
-   25% { transform: translate(-1px, 1px); opacity: 0.6; }
-   50% { transform: translate(1px, 1px); opacity: 1.0; }
-   75% { transform: translate(-1px, -1px); opacity: 0.5; }
-   100% { transform: translate(1px, -1px); opacity: 0.9; }
-}
 @keyframes text-glow-pulse { /* Enhance text pulse */
   0%, 100% { opacity: 1; filter: brightness(1); }
   50% { opacity: 0.7; filter: brightness(1.5); }
@@ -179,9 +234,6 @@ body {
 @keyframes box-glow-subtle-pulse { /* Subtle persistent pulse */
   0%, 100% { box-shadow: 0 0 8px 2px var(--terminal-glow), 0 0 14px 4px rgba(255, 176, 0, 0.3); opacity: 0.9; }
   50% { box-shadow: 0 0 6px 1px var(--terminal-glow), 0 0 10px 3px rgba(255, 176, 0, 0.2); opacity: 1; }
-}
-@keyframes pulse { /* Standard pulse */
-  50% { opacity: 0.5; }
 }
 @keyframes spin-slow {
   to { transform: rotate(360deg); }
@@ -215,11 +267,6 @@ body {
   60% { transform: translate(3px, 1px) scale(1.005); }
   80% { transform: translate(-2px, -2px) scale(0.995); }
 }
-@keyframes message-flicker-in {
-  0% { opacity: 0; filter: brightness(3); transform: scale(1.05); }
-  30% { opacity: 0.7; filter: brightness(1.5); transform: scale(1); }
-  100% { opacity: 1; filter: brightness(1); transform: scale(1); }
-}
 @keyframes input-border-flicker-anim {
    0%, 100% { opacity: 0.4; box-shadow: 0 0 1px 0px var(--terminal-border-glow); }
    50% { opacity: 0.7; box-shadow: 0 0 3px 1px var(--terminal-border-glow); }
@@ -227,28 +274,6 @@ body {
    30%, 90% { opacity: 0.3; }
 }
 
-/* --- Component Specific Styles --- */
-.message-box {
-   @apply relative px-4 py-2 rounded max-w-[85%] whitespace-pre-wrap shadow-md;
-   background-color: var(--terminal-ari-bg);
-   color: var(--terminal-fg);
-   border: 1px solid rgba(255, 176, 0, 0.1); /* Subtle border */
-   animation: message-flicker-in 0.2s ease-out forwards; /* Flicker in */
-}
-.message-box-user {
-   background-color: var(--terminal-user-bg);
-   color: var(--terminal-glow);
-   border-color: rgba(255, 215, 0, 0.15);
-}
-.message-box-error {
-   background-color: var(--terminal-error-bg);
-   color: var(--terminal-error);
-   border: 1px solid var(--terminal-error-dim);
-   /* Apply error text glow */
-   animation: message-flicker-in 0.2s ease-out forwards, pulse 1s infinite ease-in-out;
-   /* text-shadow for error glow */
-   text-shadow: 0 0 1px rgba(255,68,68,0.5), 0 0 4px var(--terminal-error), 0 0 8px rgba(204,51,51,0.5);
-}
 .corner-detail {
    @apply absolute w-2 h-2 border-[var(--terminal-border)] opacity-60;
 }
@@ -271,26 +296,83 @@ body {
     background: transparent; /* Ensure transparent base */
 }
 .terminal-button:not(:disabled):hover {
-    @apply bg-[var(--terminal-glow)] text-[var(--terminal-bg)] shadow-lg shadow-[var(--terminal-glow)]/30;
+    @apply bg-[var(--terminal-glow)] text-[var(--terminal-bg)];
+    box-shadow: 0 0 8px 2px rgba(255, 215, 0, 0.3);
 }
 .terminal-button:not(:disabled):active {
     transform: scale(0.95); /* Click feedback */
 }
 
 /* --- Markdown Specific Styles --- */
-.markdown-content { /* Apply this class to the div wrapping ReactMarkdown output */
-  p { @apply mb-3 last:mb-0 leading-relaxed; } /* Slightly more space */
-  a { @apply text-[var(--terminal-accent)] underline hover:text-[var(--terminal-glow)] hover:bg-yellow-900/30 px-1; }
-  code:not(pre > code) { @apply bg-black/60 px-1.5 py-0.5 rounded text-sm text-[var(--terminal-fg-dim)] border border-white/10; }
-  pre { @apply bg-black/80 p-4 rounded my-3 overflow-x-auto scrollbar-thin scrollbar-thumb-[var(--terminal-fg-dim)] scrollbar-track-transparent border border-white/10 text-sm; }
-  ul, ol { @apply list-inside pl-4 mb-3; }
-  ul { @apply list-disc; }
-  ol { @apply list-decimal; }
-  li { @apply mb-1; }
-  blockquote { @apply border-l-2 border-[var(--terminal-fg-dim)] pl-4 italic text-[var(--terminal-fg-dim)] mb-3 bg-black/20 py-1; }
-  hr { @apply border-t border-[var(--terminal-border)] my-4; }
-  strong { @apply font-bold text-[var(--terminal-glow)]; }
-  em { @apply italic text-[var(--terminal-accent)]; }
+.markdownContent p {
+  @apply mb-3 last:mb-0 leading-relaxed;
+}
+
+.markdownContent a {
+  @apply text-[var(--terminal-accent)] underline hover:text-[var(--terminal-glow)] hover:bg-yellow-900/30 px-1;
+}
+
+.markdownContent code:not(pre > code) {
+  @apply bg-black/60 px-1.5 py-0.5 rounded text-sm text-[var(--terminal-fg-dim)] border border-white/10;
+}
+
+.markdownContent pre {
+  @apply bg-black/80 p-4 rounded my-3 overflow-x-auto border border-white/10 text-sm;
+  scrollbar-width: thin;
+  scrollbar-color: var(--terminal-fg-dim) transparent;
+}
+
+.markdownContent pre::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+
+.markdownContent pre::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.markdownContent pre::-webkit-scrollbar-thumb {
+  background-color: var(--terminal-fg-dim);
+  border-radius: 3px;
+}
+
+.markdownContent ul,
+.markdownContent ol {
+  @apply list-inside pl-4 mb-3;
+}
+
+.markdownContent ul {
+  @apply list-disc;
+}
+
+.markdownContent ol {
+  @apply list-decimal;
+}
+
+.markdownContent li {
+  @apply mb-1;
+}
+
+.markdownContent blockquote {
+  @apply border-l-2 pl-4 italic mb-3 py-1;
+  border-color: var(--terminal-fg-dim);
+  color: var(--terminal-fg-dim);
+  background-color: rgba(0, 0, 0, 0.2);
+}
+
+.markdownContent hr {
+  @apply my-4;
+  border-top: 1px solid var(--terminal-border);
+}
+
+.markdownContent strong {
+  @apply font-bold;
+  color: var(--terminal-glow);
+}
+
+.markdownContent em {
+  @apply italic;
+  color: var(--terminal-accent);
 }
 
 /* --- Utilities --- */

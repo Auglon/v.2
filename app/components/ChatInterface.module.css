@@ -1,0 +1,245 @@
+/* Import the IBM Plex Mono font */
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;700&display=swap');
+
+/* Import base terminal styles */
+.container {
+  composes: terminalTheme from '../styles/terminal.css';
+}
+
+.crtEffect {
+  composes: crtEffect from '../styles/terminal.css';
+}
+
+.scanlineOverlay {
+  composes: scanlineOverlay from '../styles/terminal.css';
+}
+
+.staticOverlay {
+  composes: staticOverlay from '../styles/terminal.css';
+}
+
+.vignetteOverlay {
+  composes: vignetteOverlay from '../styles/terminal.css';
+}
+
+.messageBox {
+  composes: messageBox from '../styles/terminal.css';
+}
+
+.messageBoxUser {
+  composes: messageBoxUser from '../styles/terminal.css';
+}
+
+.messageBoxError {
+  composes: messageBoxError from '../styles/terminal.css';
+}
+
+.textGlow {
+  composes: textGlow from '../styles/terminal.css';
+}
+
+.textGlowError {
+  composes: textGlowError from '../styles/terminal.css';
+}
+
+/* Boot Screen */
+.bootScreen {
+  @apply absolute inset-0 flex flex-col items-center justify-center z-10;
+  background-color: var(--terminal-bg);
+}
+
+.bootText {
+  @apply text-xs opacity-85;
+  color: var(--terminal-fg);
+}
+
+.bootCursor {
+  @apply inline-block ml-2;
+  animation: blink-cursor 1s steps(1, end) infinite;
+}
+
+.bootProgressBar {
+  @apply w-1/3 h-1 mt-4;
+  background-color: var(--terminal-glow);
+  animation: pulse-erratic 1.5s infinite ease-in-out;
+}
+
+/* Message Container */
+.messageContainer {
+  @apply flex-1 overflow-y-auto p-4 pt-8 pb-28;
+  scrollbar-width: thin;
+  scrollbar-color: var(--terminal-fg-dim) transparent;
+}
+
+.messageContainer::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+
+.messageContainer::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.messageContainer::-webkit-scrollbar-thumb {
+  background-color: var(--terminal-fg-dim);
+  border-radius: 3px;
+}
+
+/* Corner Details */
+.cornerDetail {
+  @apply absolute w-2 h-2 opacity-60;
+  border: 1px solid var(--terminal-border);
+}
+
+/* Input Area */
+.inputContainer {
+  @apply fixed bottom-0 inset-x-0 p-3 pb-4 z-20;
+  background: linear-gradient(to top, var(--terminal-bg), var(--terminal-bg), transparent);
+}
+
+.terminalInput {
+  @apply w-full bg-transparent px-4 py-2 focus:outline-none;
+  color: var(--terminal-glow);
+}
+
+.terminalInput::placeholder {
+  color: var(--terminal-fg-dim);
+  opacity: 0.5;
+}
+
+.terminalInput:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.inputContainerBorder {
+  @apply absolute inset-[-1px] pointer-events-none rounded;
+  border: 1px solid var(--terminal-border);
+  animation: input-border-flicker-anim 1.8s infinite linear;
+}
+
+.inputContainerBorderLoading {
+  animation: pulse 1.2s infinite ease-in-out;
+  border-color: var(--terminal-border-glow);
+  opacity: 0.8;
+}
+
+/* Button */
+.terminalButton {
+  @apply p-2 rounded transition-all duration-200;
+  border: 1px solid var(--terminal-glow);
+  color: var(--terminal-glow);
+  background: transparent;
+}
+
+.terminalButton:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+.terminalButton:not(:disabled):hover {
+  background-color: var(--terminal-glow);
+  color: var(--terminal-bg);
+  box-shadow: 0 0 8px 2px rgba(255, 215, 0, 0.3);
+}
+
+.terminalButton:not(:disabled):active {
+  transform: scale(0.95);
+}
+
+/* Markdown Content */
+.markdownContent {
+  @apply space-y-2;
+}
+
+.markdownContent p {
+  @apply mb-3 last:mb-0 leading-relaxed;
+}
+
+.markdownContent a {
+  color: var(--terminal-accent);
+  text-decoration: underline;
+  padding: 0 0.1rem;
+}
+
+.markdownContent a:hover {
+  color: var(--terminal-glow);
+  background-color: rgba(255, 255, 0, 0.1);
+}
+
+.markdownContent code:not(pre > code) {
+  @apply bg-black/60 px-1.5 py-0.5 rounded text-sm border border-white/10;
+  color: var(--terminal-fg-dim);
+}
+
+.markdownContent pre {
+  @apply bg-black/80 p-4 rounded my-3 overflow-x-auto border border-white/10 text-sm;
+  scrollbar-width: thin;
+  scrollbar-color: var(--terminal-fg-dim) transparent;
+}
+
+.markdownContent pre::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+
+.markdownContent pre::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.markdownContent pre::-webkit-scrollbar-thumb {
+  background-color: var(--terminal-fg-dim);
+  border-radius: 3px;
+}
+
+.markdownContent ul,
+.markdownContent ol {
+  @apply list-inside pl-4 mb-3;
+}
+
+.markdownContent ul {
+  @apply list-disc;
+}
+
+.markdownContent ol {
+  @apply list-decimal;
+}
+
+.markdownContent li {
+  @apply mb-1;
+}
+
+.markdownContent blockquote {
+  @apply border-l-2 pl-4 italic mb-3 py-1;
+  border-color: var(--terminal-fg-dim);
+  color: var(--terminal-fg-dim);
+  background-color: rgba(0, 0, 0, 0.2);
+}
+
+.markdownContent hr {
+  @apply my-4;
+  border-top: 1px solid var(--terminal-border);
+}
+
+.markdownContent strong {
+  @apply font-bold;
+  color: var(--terminal-glow);
+}
+
+.markdownContent em {
+  @apply italic;
+  color: var(--terminal-accent);
+}
+
+/* Animations */
+@keyframes blink-cursor {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}
+
+@keyframes pulse-erratic {
+  0%, 100% { opacity: 1; transform: scaleX(1); }
+  25% { opacity: 0.7; transform: scaleX(0.95); }
+  50% { opacity: 0.9; transform: scaleX(1.05); }
+  75% { opacity: 0.8; transform: scaleX(0.98); }
+} 

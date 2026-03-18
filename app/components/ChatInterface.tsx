@@ -5,8 +5,8 @@ import { Send } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { PrismAsyncLight as SyntaxHighlighter } from 'react-syntax-highlighter';
-import type { SyntaxHighlighterProps } from 'react-syntax-highlighter';
 import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
+import styles from './ChatInterface.module.css';
 
 // --- Configuration ---
 const AUDIO_ASSETS = {
@@ -30,191 +30,7 @@ interface CodeProps extends React.ClassAttributes<HTMLElement>, React.HTMLAttrib
   children: React.ReactNode;
 }
 
-// --- CSS Content (Refined Version) ---
-const terminalCSS = `
-/* ==========================================================================
-   Upsilon-7 Terminal Interface - Stylesheet v1.3 [SEVERE DECAY]
-   A.R.I. Analysis: Embedded Version
-   ========================================================================== */
-
-/* --- Font Import --- */
-@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;700&display=swap');
-
-/* --- Base Configuration & Variables --- */
-:root {
-  --terminal-bg: #080600; --terminal-fg: #FFB000; --terminal-fg-dim: #B37C00;
-  --terminal-glow: #FFD700; --terminal-accent: #FFFF00; --terminal-error: #FF4444;
-  --terminal-error-dim: #CC3333; --terminal-error-bg: #440000; --terminal-user-bg: #332000;
-  --terminal-ari-bg: #1a1000; --terminal-border: rgba(255, 176, 0, 0.3);
-  --terminal-border-glow: rgba(255, 215, 0, 0.5);
-}
-
-/* --- Body & Base Styles --- */
-body {
-  background-color: var(--terminal-bg); color: var(--terminal-fg);
-  font-family: 'IBM Plex Mono', 'Courier New', Courier, monospace;
-  overflow: hidden; height: 100vh; width: 100vw; margin: 0; padding: 0;
-}
-
-/* --- Main Terminal Container & CRT Effect --- */
-.crt-effect {
-  position: fixed; inset: 0; overflow: hidden;
-  background-color: var(--terminal-bg);
-  filter: brightness(1.05) contrast(1.1) saturate(1.15);
-  animation: screen-flicker 0.15s infinite alternate;
-}
-
-/* --- Overlay Effects --- */
-.scanline-overlay, .static-overlay, .vignette-overlay, .cracked-screen-overlay {
-   position: absolute; inset: 0; pointer-events: none; z-index: 5;
-}
-.scanline-overlay {
-  background: linear-gradient(to bottom, transparent 50%, rgba(0, 0, 0, 0.35) 50%);
-  background-size: 100% 3px; opacity: 0.1;
-  animation: scanline-move 25s linear infinite;
-}
-.static-overlay {
-  background-image: url('/images/static-noise.png'); background-repeat: repeat;
-  opacity: 0.03; z-index: 6;
-  animation: static-flicker 0.08s steps(2, jump-none) infinite;
-}
-.vignette-overlay {
-  box-shadow: inset 0 0 20vw 8vw rgba(0, 0, 0, 0.85); z-index: 4;
-}
-.cracked-screen-overlay {
-   background-image: url('/images/cracked-screen.png'); background-size: cover;
-   background-position: center; opacity: 0.08; mix-blend-mode: screen; z-index: 7;
-}
-
-/* --- Text Glow & Effects --- */
-.text-glow {
-  text-shadow: 0 0 1px rgba(255,176,0,0.4), 0 0 3px var(--terminal-glow), 0 0 7px rgba(255,215,0,0.5);
-}
-.text-glow-error {
-   text-shadow: 0 0 1px rgba(255,68,68,0.5), 0 0 4px var(--terminal-error), 0 0 8px rgba(204,51,51,0.5);
-}
-.text-glow-streaming { animation: text-glow-pulse 1.2s infinite ease-in-out; }
-.box-glow-streaming {
-   box-shadow: 0 0 6px 1px rgba(255, 176, 0, 0.4);
-   animation: box-glow-pulse 1.2s infinite ease-in-out;
-}
-.box-glow-persistent {
-  border-radius: inherit;
-  box-shadow: 0 0 8px 2px var(--terminal-glow), 0 0 14px 4px rgba(255, 176, 0, 0.3);
-  animation: box-glow-subtle-pulse 3.5s infinite ease-in-out;
-}
-
-/* --- Glitch Intensity Effects --- */
-.glitch-intensity-1 .static-overlay { opacity: 0.05; animation-duration: 0.1s; }
-.glitch-intensity-1 { animation: screen-flicker 0.16s infinite alternate; }
-.glitch-intensity-2 .static-overlay { opacity: 0.07; animation-duration: 0.07s; }
-.glitch-intensity-2 { animation: screen-flicker 0.14s infinite alternate, text-jitter-mild 0.5s infinite alternate; }
-.glitch-intensity-3 .static-overlay { opacity: 0.10; animation-duration: 0.06s; }
-.glitch-intensity-3 { animation: screen-flicker 0.12s infinite alternate, text-jitter-moderate 0.3s infinite alternate; filter: brightness(1.1) contrast(1.15) saturate(1.2) hue-rotate(2deg); }
-.glitch-intensity-4 .static-overlay { opacity: 0.15; animation-duration: 0.04s; }
-.glitch-intensity-4 { animation: screen-flicker 0.1s infinite alternate, text-jitter-severe 0.2s infinite alternate, color-aberration 0.7s infinite alternate; filter: brightness(1.15) contrast(1.2) saturate(1.3) hue-rotate(-3deg); }
-.glitch-intensity-5 .static-overlay { opacity: 0.22; animation-duration: 0.03s; }
-.glitch-intensity-5 { animation: screen-flicker 0.08s infinite alternate, text-jitter-severe 0.15s infinite alternate, color-aberration 0.5s infinite alternate, screen-jump 0.6s infinite alternate; filter: brightness(1.2) contrast(1.25) saturate(1.4) hue-rotate(5deg); }
-
-/* --- Keyframe Animations --- */
-@keyframes screen-flicker { from { opacity: 1; } to { opacity: 0.97; } }
-@keyframes scanline-move { to { background-position-y: 3px; } }
-@keyframes static-flicker { 0% { transform: translate(1px, -1px); opacity: 0.9; } 25% { transform: translate(-1px, 1px); opacity: 0.6; } 50% { transform: translate(1px, 1px); opacity: 1.0; } 75% { transform: translate(-1px, -1px); opacity: 0.5; } 100% { transform: translate(1px, -1px); opacity: 0.9; } }
-@keyframes text-glow-pulse { 0%, 100% { opacity: 1; filter: brightness(1); } 50% { opacity: 0.7; filter: brightness(1.5); } }
-@keyframes box-glow-pulse { 0%, 100% { box-shadow: 0 0 6px 1px rgba(255, 176, 0, 0.4); opacity: 0.8; } 50% { box-shadow: 0 0 10px 3px rgba(255, 176, 0, 0.6); opacity: 1; } }
-@keyframes box-glow-subtle-pulse { 0%, 100% { box-shadow: 0 0 8px 2px var(--terminal-glow), 0 0 14px 4px rgba(255, 176, 0, 0.3); opacity: 0.9; } 50% { box-shadow: 0 0 6px 1px var(--terminal-glow), 0 0 10px 3px rgba(255, 176, 0, 0.2); opacity: 1; } }
-@keyframes pulse { 50% { opacity: 0.5; } }
-@keyframes spin-slow { to { transform: rotate(360deg); } }
-@keyframes text-jitter-mild { 25% { transform: translate(0.4px, -0.4px); } 75% { transform: translate(-0.4px, 0.4px); } }
-@keyframes text-jitter-moderate { 25% { transform: translate(0.7px, -0.3px); } 50% { transform: translate(-0.3px, 0.7px); } 75% { transform: translate(0.3px, -0.7px); } }
-@keyframes text-jitter-severe { 20% { transform: translate(1px, -0.6px) skewX(-1deg); } 40% { transform: translate(-0.6px, 1px) skewX(1deg); } 60% { transform: translate(0.6px, 0.6px) skewX(-0.5deg); } 80% { transform: translate(-1px, -0.3px) skewX(0.5deg); } }
-@keyframes color-aberration { 0%, 100% { text-shadow: 0.6px 0 0 rgba(255,0,0,0.5), -0.6px 0 0 rgba(0,255,255,0.5); } 50% { text-shadow: -0.6px 0 0 rgba(255,0,0,0.5), 0.6px 0 0 rgba(0,255,255,0.5); } }
-@keyframes screen-jump { 10%, 30%, 50%, 70%, 90% { transform: translate(0, 0) scale(1); } 20% { transform: translate(2px, -3px) scale(1.01); } 40% { transform: translate(-2px, 2px) scale(0.99); } 60% { transform: translate(3px, 1px) scale(1.005); } 80% { transform: translate(-2px, -2px) scale(0.995); } }
-@keyframes message-flicker-in { 0% { opacity: 0; filter: brightness(3); transform: scale(1.05); } 30% { opacity: 0.7; filter: brightness(1.5); transform: scale(1); } 100% { opacity: 1; filter: brightness(1); transform: scale(1); } }
-@keyframes input-border-flicker-anim { 0%, 100% { opacity: 0.4; box-shadow: 0 0 1px 0px var(--terminal-border-glow); } 50% { opacity: 0.7; box-shadow: 0 0 3px 1px var(--terminal-border-glow); } 10%, 70% { opacity: 0.8; } 30%, 90% { opacity: 0.3; } }
-/* --- Add these Keyframes --- */
-
-@keyframes blink-cursor {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0; }
-}
-
-@keyframes boot-text-flicker { /* Subtle flicker for the boot text block */
-  0% { opacity: 0.85; filter: brightness(1); }
-  15% { opacity: 0.8; filter: brightness(0.95); }
-  30% { opacity: 0.9; filter: brightness(1.05); }
-  50% { opacity: 0.85; filter: brightness(1); }
-  70% { opacity: 0.88; filter: brightness(1.02); }
-  100% { opacity: 0.85; filter: brightness(1); }
-}
-
-@keyframes pulse-erratic { /* Less smooth pulse */
-  0%, 100% { transform: scaleY(1); opacity: 0.7; }
-  10%, 30%, 60% { transform: scaleY(0.8); opacity: 0.4; }
-  20%, 40%, 75% { transform: scaleY(1.1); opacity: 1.0; }
-  50%, 85% { transform: scaleY(0.9); opacity: 0.6; }
-}
-
-/* --- Add these Classes --- */
-
-.boot-cursor {
-  display: inline-block; /* Needed for animation */
-  margin-left: 2px;
-  animation: blink-cursor 1s steps(1, end) infinite;
-}
-
-.boot-text-flicker {
-  animation: boot-text-flicker 0.8s infinite linear;
-}
-
-/* Use this class on the progress bar div */
-.animate-pulse-erratic {
-  animation: pulse-erratic 1.5s infinite ease-in-out;
-}
-
-/* --- Ensure base 'animate-pulse' exists if used elsewhere --- */
-/* (Or replace all instances with animate-pulse-erratic if preferred) */
-@keyframes pulse { 50% { opacity: 0.5; } }
-.animate-pulse { animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite; } /* Standard Tailwind definition */
-/* --- Component Specific Styles --- */
-.message-box { position: relative; padding: 0.5rem 1rem; margin-bottom: 1rem; border-radius: 0.25rem; max-width: 85%; white-space: pre-wrap; box-shadow: 0 2px 4px rgba(0,0,0,0.3); background-color: var(--terminal-ari-bg); color: var(--terminal-fg); border: 1px solid rgba(255, 176, 0, 0.1); animation: message-flicker-in 0.2s ease-out forwards; }
-.message-box-user { background-color: var(--terminal-user-bg); color: var(--terminal-glow); border-color: rgba(255, 215, 0, 0.15); }
-.message-box-error { background-color: var(--terminal-error-bg); color: var(--terminal-error); border: 1px solid var(--terminal-error-dim); animation: message-flicker-in 0.2s ease-out forwards, pulse 1s infinite ease-in-out; text-shadow: 0 0 1px rgba(255,68,68,0.5), 0 0 4px var(--terminal-error), 0 0 8px rgba(204,51,51,0.5); }
-.corner-detail { position: absolute; width: 0.5rem; height: 0.5rem; border: 1px solid var(--terminal-border); opacity: 0.6; }
-/* Use Tailwind for corner positioning: absolute -top-px -left-px border-l border-t etc. */
-
-.terminal-input { width: 100%; background: transparent; padding: 0.5rem 1rem; outline: none; color: var(--terminal-glow); placeholder-color: var(--terminal-fg-dim); placeholder-opacity: 0.5; &:disabled { opacity: 0.4; cursor: not-allowed; } }
-.input-container-border { position: absolute; inset: -1px; pointer-events: none; border: 1px solid var(--terminal-border); border-radius: 0.25rem; /* Match input rounding */ animation: input-border-flicker-anim 1.8s infinite linear; }
-.input-container-border-loading { animation: pulse 1.2s infinite ease-in-out; border-color: var(--terminal-border-glow); opacity: 0.8; }
-
-.terminal-button { border: 1px solid var(--terminal-glow); padding: 0.5rem; border-radius: 0.25rem; transition: all 0.2s ease-out; color: var(--terminal-glow); background: transparent; &:disabled { opacity: 0.3; cursor: not-allowed; } &:not(:disabled):hover { background-color: var(--terminal-glow); color: var(--terminal-bg); box-shadow: 0 0 8px 2px rgba(255, 215, 0, 0.4); } &:not(:disabled):active { transform: scale(0.95); } }
-
-/* --- Markdown Specific Styles --- */
-.markdown-content p { margin-bottom: 0.75rem; line-height: 1.6; }
-.markdown-content p:last-child { margin-bottom: 0; }
-.markdown-content a { color: var(--terminal-accent); text-decoration: underline; padding: 0 0.1rem; &:hover { color: var(--terminal-glow); background-color: rgba(255, 255, 0, 0.1); } }
-.markdown-content code:not(pre > code) { background-color: rgba(0, 0, 0, 0.6); padding: 0.1rem 0.4rem; border-radius: 0.25rem; font-size: 0.875em; color: var(--terminal-fg-dim); border: 1px solid rgba(255, 255, 255, 0.1); }
-.markdown-content pre { background-color: rgba(0, 0, 0, 0.8); padding: 0.75rem; border-radius: 0.25rem; margin: 0.75rem 0; overflow-x: auto; border: 1px solid rgba(255, 255, 255, 0.1); font-size: 0.875em; }
-.markdown-content pre code { background-color: transparent !important; padding: 0 !important; border: none !important; font-size: 1em !important; /* Ensure pre code inherits font size */ }
-.markdown-content ul, .markdown-content ol { list-style: inside; margin-left: 1rem; margin-bottom: 0.75rem; }
-.markdown-content ul { list-style-type: disc; }
-.markdown-content ol { list-style-type: decimal; }
-.markdown-content li { margin-bottom: 0.25rem; }
-.markdown-content blockquote { border-left: 3px solid var(--terminal-fg-dim); padding-left: 1rem; font-style: italic; color: var(--terminal-fg-dim); margin: 0.75rem 0; background-color: rgba(0, 0, 0, 0.2); padding-top: 0.25rem; padding-bottom: 0.25rem; }
-.markdown-content hr { border-top: 1px solid var(--terminal-border); margin: 1rem 0; }
-.markdown-content strong { font-weight: 700; color: var(--terminal-glow); }
-.markdown-content em { font-style: italic; color: var(--terminal-accent); }
-
-/* --- Utilities --- */
-.scrollbar-none { -ms-overflow-style: none; scrollbar-width: none; }
-.scrollbar-none::-webkit-scrollbar { display: none; }
-.scrollbar-thin { scrollbar-width: thin; scrollbar-color: var(--terminal-fg-dim) transparent; }
-.scrollbar-thin::-webkit-scrollbar { width: 5px; height: 5px; }
-.scrollbar-thin::-webkit-scrollbar-track { background: transparent; }
-.scrollbar-thin::-webkit-scrollbar-thumb { background-color: var(--terminal-fg-dim); border-radius: 3px; border: 1px solid var(--terminal-bg); }
-`;
-
-export default function ChatInterface() { // Add 'default' here
+export default function ChatInterface() {
   // ... component code
 
   // --- State ---
@@ -355,12 +171,9 @@ export default function ChatInterface() { // Add 'default' here
 
   return (
     <>
-      {/* Embedded Styles - Not recommended for large scale apps! Use CSS Modules or global CSS. */}
-      <style>{terminalCSS}</style>
-
       <div
-        className={`crt-effect ${glitchClass}`}
-        onClick={enableAudio} // Enable audio on first click anywhere
+        className={`${styles.container} ${styles.crtEffect} ${glitchClass}`}
+        onClick={enableAudio}
       >
         {/* Audio Elements */}
         {Object.entries(AUDIO_ASSETS).map(([key, src]) => (
@@ -386,16 +199,16 @@ export default function ChatInterface() { // Add 'default' here
         )}
 
         {/* Overlay Divs */}
-        <div className="scanline-overlay" />
-        <div className="static-overlay" />
-        <div className="vignette-overlay" />
-        {/* <div className="cracked-screen-overlay" /> */}
+        <div className={styles.scanlineOverlay} />
+        <div className={styles.staticOverlay} />
+        <div className={styles.vignetteOverlay} />
+        {/* <div className={styles.crackedScreenOverlay} /> */}
 
                      {/* Boot Screen - Enhanced */}
           {showBootScreen && (
-            <div className="absolute inset-0 flex flex-col items-center justify-center z-10 bg-[var(--terminal-bg)]">
+            <div className={styles.bootScreen}>
               {/* Added boot-text-flicker animation class */}
-              <pre className="text-xs text-[var(--terminal-fg)] opacity-85 boot-text-flicker">
+              <pre className={styles.bootText}>
                 {`
   Attempting Upsilon-7 Connection... [ERR: CONNECTION REFUSED]
   Re-routing via Auxiliary Matrix 7-C... Syncing... [WARN: Desync Detected]
@@ -406,16 +219,16 @@ export default function ChatInterface() { // Add 'default' here
 
   SYSTEM ONLINE ... Awaiting Operator Input`}
                 {/* Added blinking cursor element */}
-                <span className="boot-cursor">_</span>
+                <span className={styles.bootCursor}>_</span>
               </pre>
               {/* Use more erratic pulse animation */}
-              <div className="w-1/3 h-1 mt-4 bg-[var(--terminal-glow)] animate-pulse-erratic" />
-              {!isAudioEnabled && <p className="text-xs text-[var(--terminal-fg-dim)] mt-4 opacity-60">Click to enable audio interface...</p>}
+              <div className={styles.bootProgressBar} />
+              {!isAudioEnabled && <p className={`${styles.bootText} mt-4 opacity-60`}>Click to enable audio interface...</p>}
             </div>
           )}
 
         {/* Chat Message Area */}
-        <div className={`flex-1 overflow-y-auto p-4 pt-8 pb-28 scrollbar-thin ${showBootScreen ? 'opacity-0' : 'opacity-100 transition-opacity duration-1000'}`}>
+        <div className={`${styles.messageContainer} ${showBootScreen ? 'opacity-0' : 'opacity-100 transition-opacity duration-1000'}`}>
           <div className="max-w-4xl mx-auto space-y-4"> {/* Reduced space */}
             {messages.map((msg: CustomMessage) => {
               const isUser = msg.role === 'user';
@@ -440,22 +253,23 @@ export default function ChatInterface() { // Add 'default' here
               return (
                 <div
                   key={msg.id}
-                  className={`flex ${isUser ? 'justify-end' : 'justify-start'} ${isARI ? 'text-glow' : ''} ${isSystem ? 'text-glow-error': ''}`}
+                  className={`flex ${isUser ? 'justify-end' : 'justify-start'} ${isARI ? styles.textGlow : ''} ${isSystem ? styles.textGlowError : ''}`}
                 >
                   <div
-                    className={`message-box 
-                      ${isUser ? 'message-box-user' : isSystem ? 'message-box-error' : ''} 
-                      ${isARI && !msg.isComplete ? 'box-glow-streaming' : ''} 
-                      ${msg.isComplete && isARI ? 'box-glow-persistent' : ''}
+                    className={`
+                      ${styles.messageBox}
+                      ${isUser ? styles.messageBoxUser : ''}
+                      ${isSystem ? styles.messageBoxError : ''}
+                      ${isARI && !msg.isComplete ? styles.boxGlowStreaming : ''}
+                      ${msg.isComplete && isARI ? styles.boxGlowPersistent : ''}
                     `}
                   >
-                    {/* Corner Details - Applied via Tailwind for simplicity */}
-                    <div className="corner-detail absolute -top-px -left-px border-l border-t" />
-                    <div className="corner-detail absolute -top-px -right-px border-r border-t" />
-                    <div className="corner-detail absolute -bottom-px -left-px border-l border-b" />
-                    <div className="corner-detail absolute -bottom-px -right-px border-r border-b" />
+                    <div className={`${styles.cornerDetail} -top-px -left-px border-l border-t`} />
+                    <div className={`${styles.cornerDetail} -top-px -right-px border-r border-t`} />
+                    <div className={`${styles.cornerDetail} -bottom-px -left-px border-l border-b`} />
+                    <div className={`${styles.cornerDetail} -bottom-px -right-px border-r border-b`} />
 
-                    <div className="markdown-content">
+                    <div className={styles.markdownContent}>
                       <ReactMarkdown
                         remarkPlugins={[remarkGfm as any]}
                         components={{
@@ -493,20 +307,20 @@ export default function ChatInterface() { // Add 'default' here
         {/* Input Form */}
         <form
           onSubmit={handleFormSubmit}
-          className="fixed bottom-0 inset-x-0 p-3 pb-4 bg-gradient-to-t from-[var(--terminal-bg)] via-[var(--terminal-bg)] to-transparent z-20"
+          className={styles.inputContainer}
         >
           <div className="max-w-4xl mx-auto flex items-center gap-2">
            {/* Use > for the greater-than symbol within JSX for clarity and safety */}
             <span className={`text-[var(--terminal-glow)] ${isLoading ? 'animate-pulse' : ''}`}>{'>'}</span>
                                                                            
             <div className="flex-1 relative">
-              <div className={`input-container-border ${isLoading ? 'input-container-border-loading' : ''}`} />
+              <div className={`${styles.inputContainerBorder} ${isLoading ? styles.inputContainerBorderLoading : ''}`} />
               <input
                 type="text"
                 value={input}
                 onChange={handleInputChange}
                 disabled={isLoading || !isBooted}
-                className="terminal-input"
+                className={styles.terminalInput}
                 placeholder={
                   !isBooted ? 'SYSTEM OFFLINE...' : isLoading ? 'TRANSMITTING...' : 'Enter command...'
                 }
@@ -517,7 +331,7 @@ export default function ChatInterface() { // Add 'default' here
             </div>
             <button
               type="submit"
-              className="terminal-button"
+              className={styles.terminalButton}
               disabled={isLoading || !isBooted || !input.trim()}
               aria-label="Send message"
             >
